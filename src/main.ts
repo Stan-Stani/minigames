@@ -35,6 +35,26 @@ class GameScene extends Scene {
     this.#thing.setCollideWorldBounds()
 
     this.#textbox.setOrigin(0.5, 0.5)
+
+    const handleInputs = () => {
+      try {
+        if (!this.input.keyboard) {
+          throw new Error('Keyboard property of input is falsy')
+        }
+
+        var spaceBar = this.input.keyboard.addKey(
+          Phaser.Input.Keyboard.KeyCodes.SPACE
+        )
+
+        // spaceBar.on('down', () => {
+        //   logMessage('down')
+        // })
+      } catch (e: any) {
+        logMessage(e.message)
+      }
+    }
+
+    handleInputs()
   }
 
   update(time: number, delta: number) {
@@ -65,6 +85,20 @@ const config = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
+}
+
+function logMessage(message: any) {
+  console.log(message)
+  const logDiv = document.getElementById('log')
+  const messageDiv = document.createElement('div')
+  messageDiv.classList.add('log-message', 'fade-in')
+  const logMessageDiv = logDiv?.appendChild(messageDiv)
+  logMessageDiv?.append(JSON.stringify(message))
+  setTimeout(() => {
+    messageDiv.classList.add('fade-out')
+    setTimeout(() => messageDiv.remove(), 2000)
+  }, 7000)
+  
 }
 
 new Game(config)
