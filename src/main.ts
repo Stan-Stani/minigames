@@ -1,8 +1,7 @@
 import './style.css'
 import { Scene, Game, WEBGL, GameObjects, Physics } from 'phaser'
-const WIDTH = 800
-const HEIGHT = 600
-
+const WIDTH = 256
+const HEIGHT = 240
 
 const canvas = document.getElementById('game') as HTMLCanvasElement
 
@@ -11,21 +10,15 @@ class GameScene extends Scene {
   #thing: Physics.Arcade.Sprite | undefined
   constructor() {
     super('scene-game')
-    
   }
 
-  
-
   preload() {
-    
-    this.load.image('kiwi', '/kiwi.png');
-    this.load.svg('pause', 'https://assets.codepen.io/4261124/pause.svg');
+    this.load.image('kiwi', '/kiwi.png')
+    this.load.svg('pause', 'https://assets.codepen.io/4261124/pause.svg')
   }
 
   create() {
-    this.physics.world.setBounds(0,0, WIDTH, HEIGHT)
-    
-
+    this.physics.world.setBounds(0, 0, WIDTH, HEIGHT)
 
     this.#textbox = this.add.text(
       WIDTH / 2,
@@ -38,9 +31,7 @@ class GameScene extends Scene {
       }
     )
 
-    this.#thing = this.physics.add.sprite(
-      10, 10, "kiwi"
-    )
+    this.#thing = this.physics.add.sprite(10, 10, 'kiwi')
     this.#thing.setCollideWorldBounds()
 
     this.#textbox.setOrigin(0.5, 0.5)
@@ -69,6 +60,11 @@ const config = {
     },
   },
   scene: [GameScene],
+  pixelArt: true,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  },
 }
 
 new Game(config)
