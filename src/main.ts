@@ -33,7 +33,9 @@ class GameScene extends Scene {
     )
 
     this.#playerOne = this.physics.add.sprite(10, 10, 'kiwi')
-    this.#playerOne.setCollideWorldBounds()
+    this.#playerOne.setCollideWorldBounds(true, 0.1, 0.1, true)
+
+    this.#playerOne.setBounce(0.1, 0.1)
 
     this.#textbox.setOrigin(0.5, 0.5)
 
@@ -50,7 +52,6 @@ class GameScene extends Scene {
         var left = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A)
 
         spaceBar.on('down', () => {
-          toastMessage(this.#playerOne)
           this.#playerOne?.setVelocityY(-30)
         })
 
@@ -79,7 +80,57 @@ class GameScene extends Scene {
     }
 
     handleInputs()
+
+
+
+
+
+     // Create a one-pixel texture called 'pixel'
+     this.textures.generate('pixel', { data: ['1'], pixelWidth: 1, pixelHeight: 1 });
+
+     // Create a physics sprite using the 'pixel' texture
+     for (let i = 0; i < 10; i++) {
+      // Create a physics sprite using the 'pixel' texture at random positions
+      let x = Phaser.Math.Between(0, WIDTH);
+      let y = Phaser.Math.Between(0, HEIGHT);
+      let pixel = this.physics.add.sprite(x, y, 'pixel');
+
+      // Set properties on the physics body, if desired
+      pixel.body.setCollideWorldBounds(true);
+      pixel.body.setBounce(0.5);
+      pixel.body.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(-200, 200));
   }
+
+  const onHitBottom = (gameObject: any) => {
+    // This function will be called when the pixel hits the bottom side of world bounds or another object
+    alert('boom, it was a ')
+    // Perform any additional logic here, such as playing a sound or changing the game state
+}
+
+const playerBody = this.#playerOne.body as Phaser.Physics.Arcade.Body;
+  
+  
+  if (this.#playerOne.body) {
+  playerBody.world.on('worldbounds', () => { 
+        // The sprite hit the bottom side of the world bounds
+        onHitBottom(playerBody.gameObject);
+    })
+             // Listen for the 'worldbounds' event
+            
+
+  
+          // // You can also check for collisions with other objects
+          // this.physics.add.collider(this.#playerOne, anotherGameObject, (pixel, other) => {
+          //     if (pixel.body.touching.down) {
+          //         // The sprite's bottom side touched another game object
+          //         this.onHitBottom(pixel);
+          //     }
+          // });
+      // }
+  
+     
+  }
+}
 
   update(time: number, delta: number) {
     if (!this.#textbox) {
@@ -94,13 +145,24 @@ class GameScene extends Scene {
 
     // Apply friction factor to the player's velocity and make it frame rate independent
 
-    if (!this.isRunning && this.#playerOne?.body?.velocity.x) {
-      this.#playerOne.body.velocity.x *= Math.pow(friction, deltaInSeconds)
+    if (this.#playerOne?.body) {
+      if (!this.isRunning && this.#playerOne?.body?.velocity.x) {
+        this.#playerOne.body.velocity.x *= Math.pow(friction, deltaInSeconds)
 
-      // Stop the sprite if the velocity is very low
-      if (Math.abs(this.#playerOne.body.velocity.x) < 0.1) {
-        this.#playerOne.body.velocity.x = 0
+        // Stop the sprite if the velocity is very low
+        if (Math.abs(this.#playerOne.body.velocity.x) < 0.1) {
+          this.#playerOne.body.velocity.x = 0
+        }
       }
+
+
+
+      this.#playerOne.body.onCollide
+
+      
+
+
+
     }
   }
 }
