@@ -6,12 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite + TS</title>
   </head>
+
   <body>
-    <div id="app"></div>
-    <canvas id="game"></canvas>
-    <div id="log"></div>
+    <div class="take-up-viewport shelf-flex">
+      <div id="info" class="flex-grow-and-shrink">
+        <div id="log"></div>
+      </div>
+      <div id="game-wrapper" class="flex-grow-and-shrink">
+        <canvas id="game" class="flex-end"></canvas>
+      </div>
+    </div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
-
-
