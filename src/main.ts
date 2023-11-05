@@ -6,12 +6,16 @@ const HEIGHT = 240
 const canvas = document.getElementById('game') as HTMLCanvasElement
 
 class GameScene extends Scene {
-  #textbox: GameObjects.Text
+  #textbox?: GameObjects.Text
   #playerOne?: Physics.Arcade.Sprite
+  #ground?:
+    | Physics.Arcade.StaticBody
+    | (Phaser.GameObjects.Image & { body: Phaser.Physics.Arcade.StaticBody })
   constructor() {
     super('scene-game')
   }
   isRunning = false
+  isOnGround = false
 
   preload() {
     this.load.image('kiwi', '/kiwi.png')
@@ -32,12 +36,60 @@ class GameScene extends Scene {
       }
     )
 
+    this.textures.generate('ground', {
+      data: ['1'],
+      pixelWidth: WIDTH,
+      pixelHeight: 10,
+    })
+
+    // Create the ground as a static physics object
+    this.#ground = this.physics.add
+      .staticImage(0, HEIGHT, 'ground')
+      .setOrigin(0, 1) // Set the origin to the bottom-left corner
+      .refreshBody() // Refresh the physics body based on any changes
+
     this.#playerOne = this.physics.add.sprite(10, 10, 'kiwi')
     this.#playerOne.setCollideWorldBounds(true, 0.1, 0.1, true)
 
     this.#playerOne.setBounce(0.1, 0.1)
 
     this.#textbox.setOrigin(0.5, 0.5)
+
+    const dustCollision = (
+      [minX, maxX]: [number, number],
+      [minY, maxY]: [number, number]
+    ) => {
+      for (let i = 0; i < 10; i++) {
+        // Create a physics sprite using the 'pixel' texture at random positions
+        let x = Phaser.Math.Between(minX, maxX)
+        let y = Phaser.Math.Between(minY, maxY)
+        let pixel = this.physics.add.sprite(x, y, 'pixel')
+
+        // Set properties on the physics body, if desired
+        pixel.body.setCollideWorldBounds(true)
+        pixel.body.setBounce(0.5)
+        pixel.body.setVelocity(
+          Phaser.Math.Between(-20, 20),
+          Phaser.Math.Between(-20, 20)
+        )
+
+        this.time.delayedCall(
+          5000,
+          () => {
+            this.tweens.add({
+              targets: pixel,
+              alpha: { from: 1, to: 0 },
+              duration: 500,
+              onComplete: () => {
+                  pixel.destroy();
+              }
+          });
+          },
+          [],
+          this
+        )
+      }
+    }
 
     const handleInputs = () => {
       try {
@@ -81,56 +133,70 @@ class GameScene extends Scene {
 
     handleInputs()
 
-
-
-
-
-     // Create a one-pixel texture called 'pixel'
-     this.textures.generate('pixel', { data: ['1'], pixelWidth: 1, pixelHeight: 1 });
-
-     // Create a physics sprite using the 'pixel' texture
-     for (let i = 0; i < 10; i++) {
-      // Create a physics sprite using the 'pixel' texture at random positions
-      let x = Phaser.Math.Between(0, WIDTH);
-      let y = Phaser.Math.Between(0, HEIGHT);
-      let pixel = this.physics.add.sprite(x, y, 'pixel');
-
-      // Set properties on the physics body, if desired
-      pixel.body.setCollideWorldBounds(true);
-      pixel.body.setBounce(0.5);
-      pixel.body.setVelocity(Phaser.Math.Between(-200, 200), Phaser.Math.Between(-200, 200));
-  }
-
-  const onHitBottom = (gameObject: any) => {
-    // This function will be called when the pixel hits the bottom side of world bounds or another object
-    alert('boom, it was a ')
-    // Perform any additional logic here, such as playing a sound or changing the game state
-}
-
-const playerBody = this.#playerOne.body as Phaser.Physics.Arcade.Body;
-  
-  
-  if (this.#playerOne.body) {
-  playerBody.world.on('worldbounds', () => { 
-        // The sprite hit the bottom side of the world bounds
-        onHitBottom(playerBody.gameObject);
+    // Create a one-pixel texture called 'pixel'
+    this.textures.generate('pixel', {
+      data: ['1'],
+      pixelWidth: 1,
+      pixelHeight: 1,
     })
-             // Listen for the 'worldbounds' event
-            
 
-  
-          // // You can also check for collisions with other objects
-          // this.physics.add.collider(this.#playerOne, anotherGameObject, (pixel, other) => {
-          //     if (pixel.body.touching.down) {
-          //         // The sprite's bottom side touched another game object
-          //         this.onHitBottom(pixel);
-          //     }
-          // });
-      // }
-  
-     
+    const onHitBottom = (gameObject: any) => {
+      // This function will be called when the pixel hits the bottom side of world bounds or another object
+
+      // Perform any additional logic here, such as playing a sound or changing the game state
+
+      // Create a physics sprite using the 'pixel' texture
+      for (let i = 0; i < 10; i++) {
+        // Create a physics sprite using the 'pixel' texture at random positions
+        let x = Phaser.Math.Between(0, WIDTH)
+        let y = Phaser.Math.Between(0, HEIGHT)
+        let pixel = this.physics.add.sprite(x, y, 'pixel')
+
+        // Set properties on the physics body, if desired
+        pixel.body.setCollideWorldBounds(true)
+        pixel.body.setBounce(0.5)
+        pixel.body.setVelocity(
+          Phaser.Math.Between(-200, 200),
+          Phaser.Math.Between(-200, 200)
+        )
+      }
+    }
+
+    const playerBody = this.#playerOne.body as Phaser.Physics.Arcade.Body
+
+    playerBody.onCollide = true
+    if (this.#ground) {
+      this.physics.add.collider(this.#playerOne, this.#ground, () => {
+        if (!this.isOnGround) {
+          dustCollision(
+            [
+              this.#playerOne?.x! - this.#playerOne?.width! / 2,
+              this.#playerOne?.x! + this.#playerOne?.width! / 2,
+            ],
+            [
+              this.#playerOne?.y! + this.#playerOne?.height! / 2,
+              this.#playerOne?.y! + this.#playerOne?.height! / 2,
+            ]
+          )
+        }
+
+        // The sprite hit the bottom side of the world bounds
+        this.isOnGround = true
+        stickyMessage('hey')
+        // down && onHitBottom(playerBody.gameObject)
+      })
+    }
+    // Listen for the 'worldbounds' event
+
+    // // You can also check for collisions with other objects
+    // this.physics.add.collider(this.#playerOne, anotherGameObject, (pixel, other) => {
+    //     if (pixel.body.touching.down) {
+    //         // The sprite's bottom side touched another game object
+    //         this.onHitBottom(pixel);
+    //     }
+    // });
+    // }
   }
-}
 
   update(time: number, delta: number) {
     if (!this.#textbox) {
@@ -138,7 +204,7 @@ const playerBody = this.#playerOne.body as Phaser.Physics.Arcade.Body;
     }
 
     this.#textbox.rotation += 0.0005 * delta
-    stickyMessage(this.#playerOne?.body?.velocity)
+    // stickyMessage(this.#playerOne?.body?.velocity)
 
     const friction = 0.35 // friction coefficient
     const deltaInSeconds = delta / 1000 // Convert delta to seconds
@@ -155,14 +221,10 @@ const playerBody = this.#playerOne.body as Phaser.Physics.Arcade.Body;
         }
       }
 
-
-
-      this.#playerOne.body.onCollide
-
-      
-
-
-
+      if (!this.#playerOne.body.touching.down) {
+        // If the character is in the air, they can trigger the dust particles again upon the next landing
+        this.isOnGround = false
+      }
     }
   }
 }
