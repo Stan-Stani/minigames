@@ -8,9 +8,9 @@ const canvas = document.getElementById('game') as HTMLCanvasElement
 class GameScene extends Scene {
   #textbox?: GameObjects.Text
   #playerOne?: Physics.Arcade.Sprite
-  #ground?:
-    | Physics.Arcade.StaticBody
-    | (Phaser.GameObjects.Image & { body: Phaser.Physics.Arcade.StaticBody })
+  #platforms: (Phaser.GameObjects.Image & {
+    body: Phaser.Physics.Arcade.StaticBody
+  })[] = []
   constructor() {
     super('scene-game')
   }
@@ -41,11 +41,17 @@ class GameScene extends Scene {
       pixelHeight: 10,
     })
 
-    // Create the ground as a static physics object
-    this.#ground = this.physics.add
-      .staticImage(0, HEIGHT, 'ground')
-      .setOrigin(0, 1) // Set the origin to the bottom-left corner
-      .refreshBody() // Refresh the physics body based on any changes
+    this.#platforms = [
+      this.physics.add
+        .staticImage(0, HEIGHT, 'ground')
+        .setOrigin(0, 1)
+        .refreshBody(),
+
+        this.physics.add
+        .staticImage(50, HEIGHT - 30, 'ground')
+        .setOrigin(0, 1)
+        .refreshBody()
+    ]
 
     this.#playerOne = this.physics.add.sprite(10, 10, 'kiwi')
     this.#playerOne.setCollideWorldBounds(true, 0.1, 0.1, true)
@@ -72,6 +78,10 @@ class GameScene extends Scene {
           Phaser.Math.Between(-20, 20)
         )
 
+        for (const element of this.#platforms) {
+          this.physics.add.collider(pixel, element)
+        }
+
         this.time.delayedCall(
           5000,
           () => {
@@ -80,9 +90,9 @@ class GameScene extends Scene {
               alpha: { from: 1, to: 0 },
               duration: 500,
               onComplete: () => {
-                  pixel.destroy();
-              }
-          });
+                pixel.destroy()
+              },
+            })
           },
           [],
           this
@@ -164,26 +174,28 @@ class GameScene extends Scene {
     const playerBody = this.#playerOne.body as Phaser.Physics.Arcade.Body
 
     playerBody.onCollide = true
-    if (this.#ground) {
-      this.physics.add.collider(this.#playerOne, this.#ground, () => {
-        if (!this.isOnGround) {
-          dustCollision(
-            [
-              this.#playerOne?.x! - this.#playerOne?.width! / 2,
-              this.#playerOne?.x! + this.#playerOne?.width! / 2,
-            ],
-            [
-              this.#playerOne?.y! + this.#playerOne?.height! / 2,
-              this.#playerOne?.y! + this.#playerOne?.height! / 2,
-            ]
-          )
-        }
+    if (this.#platforms) {
+      for (const element of this.#platforms) {
+        this.physics.add.collider(this.#playerOne, element, () => {
+          if (!this.isOnGround && this.#playerOne?.body?.touching.down) {
+            dustCollision(
+              [
+                this.#playerOne?.x! - this.#playerOne?.width! / 2,
+                this.#playerOne?.x! + this.#playerOne?.width! / 2,
+              ],
+              [
+                this.#playerOne?.y! + this.#playerOne?.height! / 2,
+                this.#playerOne?.y! + this.#playerOne?.height! / 2,
+              ]
+            )
+          }
 
-        // The sprite hit the bottom side of the world bounds
-        this.isOnGround = true
-        stickyMessage('hey')
-        // down && onHitBottom(playerBody.gameObject)
-      })
+          // The sprite hit the bottom side of the world bounds
+          this.isOnGround = true
+          stickyMessage('hey')
+          // down && onHitBottom(playerBody.gameObject)
+        })
+      }
     }
     // Listen for the 'worldbounds' event
 
