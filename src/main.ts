@@ -19,7 +19,6 @@ class GameScene extends Scene {
 
   preload() {
     this.load.image('kiwi', '/kiwi.png')
-    this.load.svg('pause', 'https://assets.codepen.io/4261124/pause.svg')
   }
 
   create() {
@@ -140,27 +139,27 @@ class GameScene extends Scene {
       pixelHeight: 1,
     })
 
-    const onHitBottom = (gameObject: any) => {
-      // This function will be called when the pixel hits the bottom side of world bounds or another object
+    // const onHitBottom = (gameObject: any) => {
+    //   // This function will be called when the pixel hits the bottom side of world bounds or another object
 
-      // Perform any additional logic here, such as playing a sound or changing the game state
+    //   // Perform any additional logic here, such as playing a sound or changing the game state
 
-      // Create a physics sprite using the 'pixel' texture
-      for (let i = 0; i < 10; i++) {
-        // Create a physics sprite using the 'pixel' texture at random positions
-        let x = Phaser.Math.Between(0, WIDTH)
-        let y = Phaser.Math.Between(0, HEIGHT)
-        let pixel = this.physics.add.sprite(x, y, 'pixel')
+    //   // Create a physics sprite using the 'pixel' texture
+    //   for (let i = 0; i < 10; i++) {
+    //     // Create a physics sprite using the 'pixel' texture at random positions
+    //     let x = Phaser.Math.Between(0, WIDTH)
+    //     let y = Phaser.Math.Between(0, HEIGHT)
+    //     let pixel = this.physics.add.sprite(x, y, 'pixel')
 
-        // Set properties on the physics body, if desired
-        pixel.body.setCollideWorldBounds(true)
-        pixel.body.setBounce(0.5)
-        pixel.body.setVelocity(
-          Phaser.Math.Between(-200, 200),
-          Phaser.Math.Between(-200, 200)
-        )
-      }
-    }
+    //     // Set properties on the physics body, if desired
+    //     pixel.body.setCollideWorldBounds(true)
+    //     pixel.body.setBounce(0.5)
+    //     pixel.body.setVelocity(
+    //       Phaser.Math.Between(-200, 200),
+    //       Phaser.Math.Between(-200, 200)
+    //     )
+    //   }
+    // }
 
     const playerBody = this.#playerOne.body as Phaser.Physics.Arcade.Body
 
@@ -198,7 +197,7 @@ class GameScene extends Scene {
     // }
   }
 
-  update(time: number, delta: number) {
+  update(_time: number, delta: number) {
     if (!this.#textbox) {
       return
     }
