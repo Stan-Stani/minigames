@@ -23,7 +23,6 @@ jobs:
       - name: Build and Deploy
         uses: JamesIves/github-pages-deploy-action@v4.4.3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
           branch: gh-pages # The branch the action should deploy to.
           folder: dist # The folder the action should deploy.
           # You can specify additional configuration here as needed.
