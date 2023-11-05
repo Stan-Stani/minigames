@@ -18,7 +18,7 @@ class GameScene extends Scene {
   isOnGround = false
 
   preload() {
-    this.load.image('kiwi', '/kiwi.png')
+    this.load.image('kiwi', './kiwi.png')
   }
 
   create() {
