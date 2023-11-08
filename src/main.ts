@@ -8,6 +8,7 @@ const canvas = document.getElementById('game') as HTMLCanvasElement
 class GameScene extends Scene {
   #textbox?: GameObjects.Text
   #playerOne?: Physics.Arcade.Sprite
+  // @ts-ignore
   #generatedPlatforms: (Phaser.GameObjects.Image & {
     body: Phaser.Physics.Arcade.StaticBody
   })[] = []
@@ -43,6 +44,7 @@ class GameScene extends Scene {
     if (tileset) {
       this.#platforms = map.createLayer('platforms', tileset)!
       this.#platforms!.setCollisionByExclusion([-1], true)
+      //@ts-ignore
       const killObjects = map.createLayer('kill', tileset)
     }
 
