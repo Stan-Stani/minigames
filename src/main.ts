@@ -8,9 +8,10 @@ const canvas = document.getElementById('game') as HTMLCanvasElement
 class GameScene extends Scene {
   #textbox?: GameObjects.Text
   #playerOne?: Physics.Arcade.Sprite
-  #platforms: (Phaser.GameObjects.Image & {
+  #generatedPlatforms: (Phaser.GameObjects.Image & {
     body: Phaser.Physics.Arcade.StaticBody
   })[] = []
+  #platforms?: Phaser.Tilemaps.TilemapLayer
   constructor() {
     super('scene-game')
   }
@@ -19,6 +20,8 @@ class GameScene extends Scene {
 
   preload() {
     this.load.image('kiwi', './kiwi.png')
+    this.load.image('tiles', './platyKiwi.png')
+    this.load.tilemapTiledJSON('tilemapLevel1', './level1.json')
   }
 
   create() {
@@ -35,23 +38,31 @@ class GameScene extends Scene {
       }
     )
 
+    const map = this.make.tilemap({ key: 'tilemapLevel1' })
+    const tileset = map.addTilesetImage('platyKiwi', 'tiles')
+    if (tileset) {
+      this.#platforms = map.createLayer('platforms', tileset)!
+      this.#platforms!.setCollisionByExclusion([-1], true)
+      const killObjects = map.createLayer('kill', tileset)
+    }
+
     this.textures.generate('ground', {
       data: ['1'],
       pixelWidth: WIDTH,
       pixelHeight: 10,
     })
 
-    this.#platforms = [
-      this.physics.add
-        .staticImage(0, HEIGHT, 'ground')
-        .setOrigin(0, 1)
-        .refreshBody(),
+    // this.#generatedPlatforms = [
+    //   this.physics.add
+    //     .staticImage(0, HEIGHT, 'ground')
+    //     .setOrigin(0, 1)
+    //     .refreshBody(),
 
-        this.physics.add
-        .staticImage(50, HEIGHT - 30, 'ground')
-        .setOrigin(0, 1)
-        .refreshBody()
-    ]
+    //   this.physics.add
+    //     .staticImage(50, HEIGHT - 30, 'ground')
+    //     .setOrigin(0, 1)
+    //     .refreshBody(),
+    // ]
 
     this.#playerOne = this.physics.add.sprite(10, 10, 'kiwi')
     this.#playerOne.setCollideWorldBounds(true, 0.1, 0.1, true)
@@ -78,9 +89,9 @@ class GameScene extends Scene {
           Phaser.Math.Between(-20, 20)
         )
 
-        for (const element of this.#platforms) {
-          this.physics.add.collider(pixel, element)
-        }
+       
+          this.physics.add.collider(pixel, this.#platforms!)
+        
 
         this.time.delayedCall(
           5000,
@@ -175,9 +186,10 @@ class GameScene extends Scene {
 
     playerBody.onCollide = true
     if (this.#platforms) {
-      for (const element of this.#platforms) {
-        this.physics.add.collider(this.#playerOne, element, () => {
-          if (!this.isOnGround && this.#playerOne?.body?.touching.down) {
+
+        this.physics.add.collider(this.#playerOne, this.#platforms, () => {
+          stickyMessage(this.#playerOne?.body?.touching.down)
+          if (!this.isOnGround && this.#playerOne?.body?.blocked.down) {
             dustCollision(
               [
                 this.#playerOne?.x! - this.#playerOne?.width! / 2,
@@ -192,10 +204,10 @@ class GameScene extends Scene {
 
           // The sprite hit the bottom side of the world bounds
           this.isOnGround = true
-          stickyMessage('hey')
+          stickyMessage(this.isOnGround)
           // down && onHitBottom(playerBody.gameObject)
         })
-      }
+      
     }
     // Listen for the 'worldbounds' event
 
@@ -232,7 +244,7 @@ class GameScene extends Scene {
         }
       }
 
-      if (!this.#playerOne.body.touching.down) {
+      if (!this.#playerOne.body.blocked.down) {
         // If the character is in the air, they can trigger the dust particles again upon the next landing
         this.isOnGround = false
       }
