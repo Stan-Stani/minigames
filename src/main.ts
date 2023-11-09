@@ -27,6 +27,7 @@ class GameScene extends Scene {
 
   create() {
     this.physics.world.setBounds(0, 0, WIDTH, HEIGHT)
+    this.cameras.main.setBounds(0, 0, 1024 * 4, 1024 * 4);
 
     this.#textbox = this.add.text(
       WIDTH / 2,
@@ -70,6 +71,8 @@ class GameScene extends Scene {
     this.#playerOne.setCollideWorldBounds(true, 0.1, 0.1, true)
 
     this.#playerOne.setBounce(0.1, 0.1)
+    this.cameras.main.startFollow(this.#playerOne, true);
+    // this.cameras.main.setDeadzone(400, 200);
 
     this.#textbox.setOrigin(0.5, 0.5)
 
