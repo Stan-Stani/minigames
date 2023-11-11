@@ -140,7 +140,7 @@ esbuild@^0.18.10:
     "@esbuild/win32-ia32" "0.18.20"
     "@esbuild/win32-x64" "0.18.20"
 
-eventemitter3@^5.0.0:
+eventemitter3@^5.0.1:
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-5.0.1.tgz#53f5ffd0a492ac800721bb42c66b841de96423c4"
   integrity sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==
@@ -155,12 +155,12 @@ nanoid@^3.3.6:
   resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.6.tgz#443380c856d6e9f9824267d960b4236ad583ea4c"
   integrity sha512-BGcqMMJuToF7i1rt+2PWSNVnWIkGCU78jBG3RxO/bZlnZPK2Cmi2QaffxGO/2RvWi9sL+FAiRiXMgsyxQ1DIDA==
 
-phaser@^3.60.0:
-  version "3.60.0"
-  resolved "https://registry.yarnpkg.com/phaser/-/phaser-3.60.0.tgz#8a555623e64c707482e6321485b4bda84604590d"
-  integrity sha512-IKUy35EnoEVcl2EmJ8WOyK4X8OoxHYdlhZLgRGpNrvD1fEagYffhVmwHcapE/tGiLgyrnezmXIo5RrH2NcrTHw==
+phaser@^3.70.0:
+  version "3.70.0"
+  resolved "https://registry.yarnpkg.com/phaser/-/phaser-3.70.0.tgz#8d187308375171d268d5c509ecdd796aac164ab9"
+  integrity sha512-2g+gh+Jp9f/Ho9FOXOYbIJMGf3UZXyMbW2iLScFaLQw11e/LqVyxj/YmaBauWbHabeTnZjiWkPklDnxhesMH0g==
   dependencies:
-    eventemitter3 "^5.0.0"
+    eventemitter3 "^5.0.1"
 
 picocolors@^1.0.0:
   version "1.0.0"
