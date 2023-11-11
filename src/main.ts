@@ -26,8 +26,8 @@ class GameScene extends Scene {
   }
 
   create() {
-    this.physics.world.setBounds(0, 0, WIDTH, HEIGHT)
-    this.cameras.main.setBounds(0, 0, 1024 * 4, 1024 * 4);
+    this.physics.world.setBounds(0, 0, WIDTH * 11, HEIGHT)
+    this.cameras.main.setBounds(0, 0, 1024 * 4, HEIGHT)
 
     this.#textbox = this.add.text(
       WIDTH / 2,
@@ -71,7 +71,9 @@ class GameScene extends Scene {
     this.#playerOne.setCollideWorldBounds(true, 0.1, 0.1, true)
 
     this.#playerOne.setBounce(0.1, 0.1)
-    this.cameras.main.startFollow(this.#playerOne, true);
+    
+    this.#playerOne.setDamping(true)
+    this.cameras.main.startFollow(this.#playerOne, true)
     // this.cameras.main.setDeadzone(400, 200);
 
     this.#textbox.setOrigin(0.5, 0.5)
@@ -94,9 +96,7 @@ class GameScene extends Scene {
           Phaser.Math.Between(-20, 20)
         )
 
-       
-          this.physics.add.collider(pixel, this.#platforms!)
-        
+        this.physics.add.collider(pixel, this.#platforms!)
 
         this.time.delayedCall(
           5000,
@@ -129,7 +129,9 @@ class GameScene extends Scene {
         var left = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A)
 
         spaceBar.on('down', () => {
-          this.#playerOne?.setVelocityY(-30)
+          if (this.#playerOne?.body?.blocked.down) {
+            this.#playerOne?.setVelocityY(-45)
+          }
         })
 
         right
@@ -191,28 +193,27 @@ class GameScene extends Scene {
 
     playerBody.onCollide = true
     if (this.#platforms) {
-
-        this.physics.add.collider(this.#playerOne, this.#platforms, () => {
-          stickyMessage(this.#playerOne?.body?.touching.down)
-          if (!this.isOnGround && this.#playerOne?.body?.blocked.down) {
-            dustCollision(
-              [
-                this.#playerOne?.x! - this.#playerOne?.width! / 2,
-                this.#playerOne?.x! + this.#playerOne?.width! / 2,
-              ],
-              [
-                this.#playerOne?.y! + this.#playerOne?.height! / 2,
-                this.#playerOne?.y! + this.#playerOne?.height! / 2,
-              ]
-            )
-          }
-
-          // The sprite hit the bottom side of the world bounds
-          this.isOnGround = true
-          stickyMessage(this.isOnGround)
-          // down && onHitBottom(playerBody.gameObject)
-        })
-      
+      this.physics.add.collider(this.#playerOne, this.#platforms, () => {
+       
+        if (!this.isOnGround && this.#playerOne?.body?.blocked.down) {
+          dustCollision(
+            [
+              this.#playerOne?.x! - this.#playerOne?.width! / 2,
+              this.#playerOne?.x! + this.#playerOne?.width! / 2,
+            ],
+            [
+              this.#playerOne?.y! + this.#playerOne?.height! / 2,
+              this.#playerOne?.y! + this.#playerOne?.height! / 2,
+            ]
+          )
+          this.#playerOne?.setDrag(0.2, 0)
+        }
+        
+        // The sprite hit the bottom side of the world bounds
+        this.isOnGround = true
+        
+        // down && onHitBottom(playerBody.gameObject)
+      })
     }
     // Listen for the 'worldbounds' event
 
@@ -231,6 +232,9 @@ class GameScene extends Scene {
       return
     }
 
+    // @ts-ignore
+    stickyMessage(this.#playerOne?.body?.drag)
+
     this.#textbox.rotation += 0.0005 * delta
     // stickyMessage(this.#playerOne?.body?.velocity)
 
@@ -240,17 +244,17 @@ class GameScene extends Scene {
     // Apply friction factor to the player's velocity and make it frame rate independent
 
     if (this.#playerOne?.body) {
-      if (!this.isRunning && this.#playerOne?.body?.velocity.x) {
-        this.#playerOne.body.velocity.x *= Math.pow(friction, deltaInSeconds)
+      // if (!this.isRunning && this.#playerOne?.body?.velocity.x) {
+      //   this.#playerOne.body.velocity.x *= Math.pow(friction, deltaInSeconds)
 
-        // Stop the sprite if the velocity is very low
-        if (Math.abs(this.#playerOne.body.velocity.x) < 0.1) {
-          this.#playerOne.body.velocity.x = 0
-        }
-      }
+      //   // Stop the sprite if the velocity is very low
+      //   if (Math.abs(this.#playerOne.body.velocity.x) < 0.1) {
+      //     this.#playerOne.body.velocity.x = 0
+      //   }
+      // }
 
       if (!this.#playerOne.body.blocked.down) {
-        // If the character is in the air, they can trigger the dust particles again upon the next landing
+        this.#playerOne?.setDrag(0.75, 0)
         this.isOnGround = false
       }
     }
