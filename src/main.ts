@@ -13,6 +13,7 @@ class GameScene extends Scene {
     body: Phaser.Physics.Arcade.StaticBody
   })[] = []
   #platforms?: Phaser.Tilemaps.TilemapLayer
+  #spawnPlayer?: GameObjects.GameObject[]
   constructor() {
     super('scene-game')
   }
@@ -21,8 +22,8 @@ class GameScene extends Scene {
 
   preload() {
     this.load.image('kiwi', './kiwi.png')
-    this.load.image('tiles', './platyKiwi.png')
-    this.load.tilemapTiledJSON('tilemapLevel1', './level1.json')
+    this.load.image('tiles', './platyKiwi/platyKiwi.png')
+    this.load.tilemapTiledJSON('tilemapLevel1', './platyKiwi/level1.json')
   }
 
   create() {
@@ -43,6 +44,9 @@ class GameScene extends Scene {
     const map = this.make.tilemap({ key: 'tilemapLevel1' })
     const tileset = map.addTilesetImage('platyKiwi', 'tiles')
     if (tileset) {
+      this.#spawnPlayer = map.createFromObjects('Spawn', {
+        name: 'playerSpawn',
+      })
       this.#platforms = map.createLayer('platforms', tileset)!
       this.#platforms!.setCollisionByExclusion([-1], true)
       //@ts-ignore
@@ -67,11 +71,16 @@ class GameScene extends Scene {
     //     .refreshBody(),
     // ]
 
-    this.#playerOne = this.physics.add.sprite(10, 10, 'kiwi')
+    console.log(this.#spawnPlayer)
+    this.#playerOne = this.physics.add.sprite(
+      this.#spawnPlayer[0].x,
+      this.#spawnPlayer[0].y,
+      'kiwi'
+    )
     this.#playerOne.setCollideWorldBounds(true, 0.1, 0.1, true)
 
-    this.#playerOne.setBounce(0.1, 0.1)
-    
+    // this.#playerOne.setBounce(0.1, 0.1)
+
     this.#playerOne.setDamping(true)
     this.cameras.main.startFollow(this.#playerOne, true)
     // this.cameras.main.setDeadzone(400, 200);
@@ -130,7 +139,8 @@ class GameScene extends Scene {
 
         spaceBar.on('down', () => {
           if (this.#playerOne?.body?.blocked.down) {
-            this.#playerOne?.setVelocityY(-45)
+            this.#playerOne?.setVelocityY(-100)
+            toastMessage('space')
           }
         })
 
@@ -194,7 +204,6 @@ class GameScene extends Scene {
     playerBody.onCollide = true
     if (this.#platforms) {
       this.physics.add.collider(this.#playerOne, this.#platforms, () => {
-       
         if (!this.isOnGround && this.#playerOne?.body?.blocked.down) {
           dustCollision(
             [
@@ -208,10 +217,10 @@ class GameScene extends Scene {
           )
           this.#playerOne?.setDrag(0.2, 0)
         }
-        
+
         // The sprite hit the bottom side of the world bounds
         this.isOnGround = true
-        
+
         // down && onHitBottom(playerBody.gameObject)
       })
     }
@@ -228,12 +237,14 @@ class GameScene extends Scene {
   }
 
   update(_time: number, delta: number) {
+    stickyMessage('playerOne Velocity:', this.#playerOne?.body?.velocity)
+
     if (!this.#textbox) {
       return
     }
 
     // @ts-ignore
-    stickyMessage(this.#playerOne?.body?.drag)
+    // stickyMessage(this.#playerOne?.body?.drag)
 
     this.#textbox.rotation += 0.0005 * delta
     // stickyMessage(this.#playerOne?.body?.velocity)
@@ -258,26 +269,42 @@ class GameScene extends Scene {
         this.isOnGround = false
       }
     }
+    // clearStickyMessage()
   }
 }
 
-function stickyMessage(message: any) {
-  console.log(message)
-  const prettyMessage =
-    typeof message === 'string' || typeof message === 'number'
-      ? String(message)
-      : JSON.stringify(message)
-
-  if (!document.getElementById('sticky-message')) {
-    const logDiv = document.getElementById('log')
-    const messageDiv = document.createElement('div')
-    messageDiv.id = 'sticky-message'
-    messageDiv.classList.add('log-message', 'fade-in')
-    logDiv?.appendChild(messageDiv)
+function stickyMessage(...messages: any) {
+  // console.log(message)
+  const prettyMessages: string[] = []
+  for (const message of messages) {
+    prettyMessages.push(
+      typeof message === 'string' || typeof message === 'number'
+        ? String(message)
+        : JSON.stringify(message)
+    )
   }
 
-  const stickyMessage = document.getElementById('sticky-message')!
-  stickyMessage.textContent = prettyMessage
+  let identifier = getStackIdentifier()
+  if (!stackToDivMap[identifier]) {
+    console.log('s')
+    // Create a new div for this identifier
+    let newDiv = document.createElement('div')
+    newDiv.textContent = prettyMessages.join(' ')
+    const logDiv = document.getElementById('log')
+    const messageDiv = logDiv!.appendChild(newDiv)
+    messageDiv.classList.add('log-message', 'fade-in')
+    stackToDivMap[identifier] = newDiv
+  } else {
+    // Update the existing div
+    stackToDivMap[identifier].textContent = prettyMessages.join(' ')
+  }
+}
+
+function clearStickyMessage() {
+  const stickyMessage = document.getElementById('sticky-message')
+  if (stickyMessage) {
+    stickyMessage.innerHTML = ''
+  }
 }
 
 function toastMessage(message: any) {
@@ -297,6 +324,37 @@ function toastMessage(message: any) {
   }, 7000)
 }
 
+interface IDictionary {
+  [index: string]: HTMLElement
+}
+let stackToDivMap: IDictionary = {}
+
+function getStackIdentifier() {
+  let stack = new Error().stack
+  if (stack) {
+    let stackLines = stack.split('\n')
+    // Use a combination of function name and line number as the identifier
+    // Adjust the index based on where the relevant information is in your stack trace
+    return stackLines[2] + stackLines[3]
+  }
+  return ''
+}
+
+function createOrUpdateDivByStack(message: string) {
+  let identifier = getStackIdentifier()
+
+  if (!stackToDivMap[identifier]) {
+    // Create a new div for this identifier
+    let newDiv = document.createElement('div')
+    newDiv.textContent = message
+    document.body.appendChild(newDiv)
+    stackToDivMap[identifier] = newDiv
+  } else {
+    // Update the existing div
+    stackToDivMap[identifier].textContent = message
+  }
+}
+
 const config: Phaser.Types.Core.GameConfig = {
   type: WEBGL,
   width: WIDTH,
@@ -306,7 +364,7 @@ const config: Phaser.Types.Core.GameConfig = {
     default: 'arcade',
     arcade: {
       // pixels per second
-      gravity: { y: 25 },
+      gravity: { y: 128 },
       // debug: true
     },
   },
