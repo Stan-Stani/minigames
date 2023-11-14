@@ -22,6 +22,7 @@ class GameScene extends Scene {
 
   preload() {
     this.load.image('kiwi', './kiwi.png')
+    this.load.image('enemy', './enemy.png')
     this.load.image('tiles', './platyKiwi/platyKiwi.png')
     this.load.tilemapTiledJSON('tilemapLevel1', './platyKiwi/level1.json')
   }
@@ -96,7 +97,7 @@ class GameScene extends Scene {
         let x = Phaser.Math.Between(minX, maxX)
         let y = Phaser.Math.Between(minY, maxY)
         let pixel = this.physics.add.sprite(x, y, 'pixel')
-
+        
         // Set properties on the physics body, if desired
         pixel.body.setCollideWorldBounds(true)
         pixel.body.setBounce(0.5)
