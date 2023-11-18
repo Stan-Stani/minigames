@@ -2,6 +2,7 @@ import './style.css'
 import { Scene, Game, WEBGL, GameObjects, Physics } from 'phaser'
 const WIDTH = 256
 const HEIGHT = 240
+const GRAVITY = 128;
 
 const canvas = document.getElementById('game') as HTMLCanvasElement
 
@@ -97,6 +98,7 @@ class GameScene extends Scene {
         let x = Phaser.Math.Between(minX, maxX)
         let y = Phaser.Math.Between(minY, maxY)
         let pixel = this.physics.add.sprite(x, y, 'pixel')
+        pixel.setGravityY(-GRAVITY + 60)
         
         // Set properties on the physics body, if desired
         pixel.body.setCollideWorldBounds(true)
@@ -365,7 +367,7 @@ const config: Phaser.Types.Core.GameConfig = {
     default: 'arcade',
     arcade: {
       // pixels per second
-      gravity: { y: 128 },
+      gravity: { y: GRAVITY },
       // debug: true
     },
   },
