@@ -143,7 +143,6 @@ class GameScene extends Scene {
         spaceBar.on('down', () => {
           if (this.#playerOne?.body?.blocked.down) {
             this.#playerOne?.setVelocityY(-100)
-            toastMessage('space')
           }
         })
 
@@ -151,20 +150,25 @@ class GameScene extends Scene {
           .on('down', () => {
             this.#playerOne?.setAccelerationX(30)
             this.isRunning = true
+
           })
           .on('up', () => {
             this.#playerOne?.setAccelerationX(0)
             this.isRunning = false
           })
-
+          
         left
           .on('down', () => {
             this.#playerOne?.setAccelerationX(-30)
             this.isRunning = true
+            
+            stickyMessage({_id: 'left'}, 'left: down')
           })
           .on('up', () => {
             this.#playerOne?.setAccelerationX(0)
             this.isRunning = false
+
+            stickyMessage({_id: 'left'}, 'left: up')
           })
       } catch (e: any) {
         toastMessage(e.message)
@@ -279,15 +283,26 @@ class GameScene extends Scene {
 function stickyMessage(...messages: any) {
   // console.log(message)
   const prettyMessages: string[] = []
+  let identifier;
+
+  
+  identifier = getStackIdentifier()
   for (const message of messages) {
+    if (message.hasOwnProperty('_id')) {
+      identifier = message._id
+      continue;
+    } 
+    
     prettyMessages.push(
       typeof message === 'string' || typeof message === 'number'
         ? String(message)
         : JSON.stringify(message)
     )
+    
   }
 
-  let identifier = getStackIdentifier()
+  
+
   if (!stackToDivMap[identifier]) {
     console.log('s')
     // Create a new div for this identifier
@@ -341,21 +356,6 @@ function getStackIdentifier() {
     return stackLines[2] + stackLines[3]
   }
   return ''
-}
-
-function createOrUpdateDivByStack(message: string) {
-  let identifier = getStackIdentifier()
-
-  if (!stackToDivMap[identifier]) {
-    // Create a new div for this identifier
-    let newDiv = document.createElement('div')
-    newDiv.textContent = message
-    document.body.appendChild(newDiv)
-    stackToDivMap[identifier] = newDiv
-  } else {
-    // Update the existing div
-    stackToDivMap[identifier].textContent = message
-  }
 }
 
 const config: Phaser.Types.Core.GameConfig = {
