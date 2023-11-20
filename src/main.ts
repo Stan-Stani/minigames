@@ -257,6 +257,11 @@ class GameScene extends Scene {
       this.#playerOne?.body?.acceleration
     )
 
+    // Don't waste time calculating super small velocity endlessly for drag
+    if ((Math.abs(this.#playerOne?.body?.velocity.x ?? 0) < .1) && (this.#playerOne?.body?.acceleration.x === 0)) {
+      this.#playerOne.body.velocity.x = 0
+    }
+
     if (!this.#textbox) {
       return
     }
