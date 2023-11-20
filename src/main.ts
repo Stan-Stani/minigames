@@ -2,13 +2,13 @@ import './style.css'
 import { Scene, Game, WEBGL, GameObjects, Physics } from 'phaser'
 const WIDTH = 256
 const HEIGHT = 240
-const GRAVITY = 128;
+const GRAVITY = 128
 
 const canvas = document.getElementById('game') as HTMLCanvasElement
 
 class GameScene extends Scene {
   #textbox?: GameObjects.Text
-  #playerOne?: Physics.Arcade.Sprite
+  #playerOne?: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
   // @ts-ignore
   #generatedPlatforms: (Phaser.GameObjects.Image & {
     body: Phaser.Physics.Arcade.StaticBody
@@ -99,7 +99,7 @@ class GameScene extends Scene {
         let y = Phaser.Math.Between(minY, maxY)
         let pixel = this.physics.add.sprite(x, y, 'pixel')
         pixel.setGravityY(-GRAVITY + 60)
-        
+
         // Set properties on the physics body, if desired
         pixel.body.setCollideWorldBounds(true)
         pixel.body.setBounce(0.5)
@@ -150,25 +150,32 @@ class GameScene extends Scene {
           .on('down', () => {
             this.#playerOne?.setAccelerationX(30)
             this.isRunning = true
-
           })
           .on('up', () => {
-            this.#playerOne?.setAccelerationX(0)
+            // This conditional is so we don't set accel to 0 when releasing
+            // the right key if both the left and right key are pressed, and
+            // the object is currently accelerating left
+            if ((this.#playerOne?.body.acceleration?.x ?? 0) > 0) {
+              this.#playerOne?.setAccelerationX(0)
+            }
             this.isRunning = false
           })
-          
+
         left
           .on('down', () => {
             this.#playerOne?.setAccelerationX(-30)
             this.isRunning = true
-            
-            stickyMessage({_id: 'left'}, 'left: down')
+
+            stickyMessage({ _id: 'left' }, 'left: down')
           })
           .on('up', () => {
-            this.#playerOne?.setAccelerationX(0)
+            // See right key up event explanation
+            if ((this.#playerOne?.body.acceleration?.x ?? 0) < 0) {
+              this.#playerOne?.setAccelerationX(0)
+            }
             this.isRunning = false
 
-            stickyMessage({_id: 'left'}, 'left: up')
+            stickyMessage({ _id: 'left' }, 'left: up')
           })
       } catch (e: any) {
         toastMessage(e.message)
@@ -245,6 +252,10 @@ class GameScene extends Scene {
 
   update(_time: number, delta: number) {
     stickyMessage('playerOne Velocity:', this.#playerOne?.body?.velocity)
+    stickyMessage(
+      'playerOne Acceleration:',
+      this.#playerOne?.body?.acceleration
+    )
 
     if (!this.#textbox) {
       return
@@ -283,25 +294,21 @@ class GameScene extends Scene {
 function stickyMessage(...messages: any) {
   // console.log(message)
   const prettyMessages: string[] = []
-  let identifier;
+  let identifier
 
-  
   identifier = getStackIdentifier()
   for (const message of messages) {
     if (message.hasOwnProperty('_id')) {
       identifier = message._id
-      continue;
-    } 
-    
+      continue
+    }
+
     prettyMessages.push(
       typeof message === 'string' || typeof message === 'number'
         ? String(message)
         : JSON.stringify(message)
     )
-    
   }
-
-  
 
   if (!stackToDivMap[identifier]) {
     console.log('s')
