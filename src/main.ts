@@ -146,9 +146,15 @@ class GameScene extends Scene {
           }
         })
 
+        // @todo handle case when slowing down at 60 and passing through 0
         right
           .on('down', () => {
+            if ((this.#playerOne?.body.velocity?.x ?? 0) >= 0) {
             this.#playerOne?.setAccelerationX(30)
+            } else {
+              // else we are trying to slow down while sliding left
+              this.#playerOne?.setAccelerationX(60)
+            }
             this.isRunning = true
           })
           .on('up', () => {
@@ -163,7 +169,11 @@ class GameScene extends Scene {
 
         left
           .on('down', () => {
+            if ((this.#playerOne?.body.velocity?.x ?? 0) <= 0) {
             this.#playerOne?.setAccelerationX(-30)
+            } else {
+              this.#playerOne?.setAccelerationX(-60)
+            }
             this.isRunning = true
 
             stickyMessage({ _id: 'left' }, 'left: down')
