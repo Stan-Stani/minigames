@@ -1,9 +1,7 @@
-import { Scene, Game, WEBGL, GameObjects, Physics } from 'phaser'
+import { Scene, GameObjects} from 'phaser'
 const WIDTH = 256
 const HEIGHT = 240
 const GRAVITY = 128
-
-const canvas = document.getElementById('game') as HTMLCanvasElement
 
 interface IPlayer extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
   brakingInfo: {
