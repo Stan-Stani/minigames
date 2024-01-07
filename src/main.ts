@@ -48,10 +48,12 @@ class GameScene extends Scene {
       baseAcceleration = -30
       conditionalResultToUse = (this.#playerOne?.body.velocity?.x ?? 0) <= 0
       directionBeforeBraking = 'right'
+      this.#playerOne?.setFlipX(true)
     } else if (direction === 'right') {
       baseAcceleration = 30
       conditionalResultToUse = (this.#playerOne?.body.velocity?.x ?? 0) >= 0
       directionBeforeBraking = 'left'
+      this.#playerOne?.setFlipX(false)
     } else {
       return
     }
@@ -129,6 +131,7 @@ class GameScene extends Scene {
       this.#spawnPlayer[0].y,
       'kiwi'
     )
+    
 
     this.#playerOne.brakingInfo = {
       isBraking: false,
