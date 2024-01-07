@@ -1,4 +1,3 @@
-import './style.css'
 import { Scene, Game, WEBGL, GameObjects, Physics } from 'phaser'
 const WIDTH = 256
 const HEIGHT = 240
@@ -19,9 +18,9 @@ interface IPlayer extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
 }
 
 export class PlatformerTestScene extends Scene {
-constructor() {
- super('PlatformerTestScene')
-}
+  constructor() {
+    super('PlatformerTestScene')
+  }
 
   #textbox?: GameObjects.Text
   #playerOne?: IPlayer
@@ -35,14 +34,12 @@ constructor() {
   isRunning = false
   isOnGround = false
 
-   /** Attempts to set the acceleration of the player in the given direction */
-   setHorizontalAcceleration(
-    direction: 'left' | 'right'
-  ) {
+  /** Attempts to set the acceleration of the player in the given direction */
+  setHorizontalAcceleration(direction: 'left' | 'right') {
     if (!this.#playerOne) return
     let baseAcceleration: number
-    /** Returns true if player is accelerating in direction of 
-     * current velocity 
+    /** Returns true if player is accelerating in direction of
+     * current velocity
      */
     let conditionalResultToUse: boolean
     let directionBeforeBraking: 'left' | 'right'
@@ -63,13 +60,12 @@ constructor() {
       this.#playerOne?.setAccelerationX(baseAcceleration)
     } else if (this.isOnGround) {
       // else we are trying to slow down while sliding in the other direction
-      
-        this.#playerOne.brakingInfo = {
-          isBraking: true,
-          directionBeforeBraking: directionBeforeBraking,
-        }
-        this.#playerOne?.setAccelerationX(2 * baseAcceleration)
-      
+
+      this.#playerOne.brakingInfo = {
+        isBraking: true,
+        directionBeforeBraking: directionBeforeBraking,
+      }
+      this.#playerOne?.setAccelerationX(2 * baseAcceleration)
     } else if (!this.isOnGround) {
       this.#playerOne.setAccelerationX(baseAcceleration / 2)
     }
@@ -133,7 +129,6 @@ constructor() {
       this.#spawnPlayer[0].y,
       'kiwi'
     )
-    
 
     this.#playerOne.brakingInfo = {
       isBraking: false,
@@ -189,8 +184,6 @@ constructor() {
         )
       }
     }
-
-   
 
     const handleInputs = () => {
       try {
