@@ -6,9 +6,17 @@ const GRAVITY = 128
 
 const canvas = document.getElementById('game') as HTMLCanvasElement
 
+interface IPlayer extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
+  brakingInfo: {
+    isBraking: boolean
+    // direction body was moving when braking started
+    initialDirection?: 'right' | 'left'
+  }
+}
+
 class GameScene extends Scene {
   #textbox?: GameObjects.Text
-  #playerOne?: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
+  #playerOne?: IPlayer
   // @ts-ignore
   #generatedPlatforms: (Phaser.GameObjects.Image & {
     body: Phaser.Physics.Arcade.StaticBody
@@ -79,6 +87,12 @@ class GameScene extends Scene {
       this.#spawnPlayer[0].y,
       'kiwi'
     )
+
+    this.#playerOne.brakingInfo = {
+      isBraking: false,
+      initialDirection: undefined,
+    }
+
     this.#playerOne.setCollideWorldBounds(true, 0.1, 0.1, true)
 
     // this.#playerOne.setBounce(0.1, 0.1)
@@ -149,39 +163,65 @@ class GameScene extends Scene {
         // @todo handle case when slowing down at 60 and passing through 0
         right
           .on('down', () => {
+            if (!this.#playerOne) return
             if ((this.#playerOne?.body.velocity?.x ?? 0) >= 0) {
-            this.#playerOne?.setAccelerationX(30)
+              this.#playerOne?.setAccelerationX(30)
             } else {
               // else we are trying to slow down while sliding left
-              this.#playerOne?.setAccelerationX(60)
+              if (this.isOnGround) {
+                this.#playerOne.brakingInfo = {
+                  isBraking: true,
+                  initialDirection: 'left',
+                }
+                this.#playerOne?.setAccelerationX(60)
+              }
             }
             this.isRunning = true
           })
           .on('up', () => {
+            if (!this.#playerOne) return
             // This conditional is so we don't set accel to 0 when releasing
             // the right key if both the left and right key are pressed, and
             // the object is currently accelerating left
             if ((this.#playerOne?.body.acceleration?.x ?? 0) > 0) {
               this.#playerOne?.setAccelerationX(0)
+              this.#playerOne.brakingInfo = {
+                isBraking: false,
+                initialDirection: undefined,
+              }
             }
             this.isRunning = false
           })
 
         left
           .on('down', () => {
+            if (!this.#playerOne) return
             if ((this.#playerOne?.body.velocity?.x ?? 0) <= 0) {
-            this.#playerOne?.setAccelerationX(-30)
+              this.#playerOne?.setAccelerationX(-30)
             } else {
-              this.#playerOne?.setAccelerationX(-60)
+              if (this.isOnGround) {
+                this.#playerOne.brakingInfo = {
+                  isBraking: true,
+                  initialDirection: 'right',
+                }
+                this.#playerOne?.setAccelerationX(-60)
+              } {
+
+              }
             }
             this.isRunning = true
 
             stickyMessage({ _id: 'left' }, 'left: down')
           })
           .on('up', () => {
+            if (!this.#playerOne) return
             // See right key up event explanation
             if ((this.#playerOne?.body.acceleration?.x ?? 0) < 0) {
               this.#playerOne?.setAccelerationX(0)
+              this.#playerOne.brakingInfo = {
+                isBraking: false,
+                initialDirection: undefined,
+              }
             }
             this.isRunning = false
 
@@ -244,6 +284,7 @@ class GameScene extends Scene {
 
         // The sprite hit the bottom side of the world bounds
         this.isOnGround = true
+        // @todo Logic for reinstating movement if a left or right key is held down
 
         // down && onHitBottom(playerBody.gameObject)
       })
@@ -266,10 +307,39 @@ class GameScene extends Scene {
       'playerOne Acceleration:',
       this.#playerOne?.body?.acceleration
     )
+    stickyMessage('brakingInfo:', this.#playerOne?.brakingInfo)
+    if (!this.#playerOne) return
 
     // Don't waste time calculating super small velocity endlessly for drag
-    if ((Math.abs(this.#playerOne?.body?.velocity.x ?? 0) < .1) && (this.#playerOne?.body?.acceleration.x === 0)) {
+    if (
+      Math.abs(this.#playerOne?.body?.velocity.x ?? 0) < 0.1 &&
+      this.#playerOne?.body?.acceleration.x === 0
+    ) {
       this.#playerOne.body.velocity.x = 0
+    }
+
+    // Transition from increased abs value of decelleration of braking (60) to running's acceleration (30)
+    if (this.#playerOne.brakingInfo.isBraking) {
+      if (
+        this.#playerOne.brakingInfo.initialDirection === 'right' &&
+        this.#playerOne.body.velocity.x < 0
+      ) {
+        this.#playerOne.body.setAccelerationX(-30)
+        this.#playerOne.brakingInfo = {
+          isBraking: false,
+          initialDirection: undefined,
+        }
+      }
+      if (
+        this.#playerOne.brakingInfo.initialDirection === 'left' &&
+        this.#playerOne.body.velocity.x > 0
+      ) {
+        this.#playerOne.body.setAccelerationX(30)
+        this.#playerOne.brakingInfo = {
+          isBraking: false,
+          initialDirection: undefined,
+        }
+      }
     }
 
     if (!this.#textbox) {
@@ -300,6 +370,11 @@ class GameScene extends Scene {
       if (!this.#playerOne.body.blocked.down) {
         this.#playerOne?.setDrag(0.75, 0)
         this.isOnGround = false
+        // Need to keep track of braking info and not set it to false here
+        // this.#playerOne.brakingInfo = {
+        //   isBraking: false,
+        //   initialDirection: undefined,
+        // }
       }
     }
     // clearStickyMessage()
