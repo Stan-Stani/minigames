@@ -1,5 +1,7 @@
+import './style.css'
 import { Game, Scene, WEBGL } from 'phaser'
-import { PlatformerTestScene } from './platformerTest';
+import { PlatformerTestScene } from './games/platformerTest';
+import { BobberScene } from './games/bobber';
 interface IMenuScene {
   menu: { scene: string; text: string }[]
 }
@@ -72,7 +74,7 @@ const config: Phaser.Types.Core.GameConfig = {
       // debug: true
     },
   },
-  scene: [MenuScene, PlatformerTestScene],
+  scene: [MenuScene, PlatformerTestScene, BobberScene],
   pixelArt: true,
   scale: {
     parent: 'game-wrapper',

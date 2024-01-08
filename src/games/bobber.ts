@@ -1,4 +1,4 @@
-import { Scene, GameObjects } from 'phaser'
+import { GameObjects, Scene } from 'phaser'
 import { stickyMessage, toastMessage } from '../debugging/tools'
 const WIDTH = 256
 const HEIGHT = 240
@@ -16,9 +16,9 @@ interface IPlayer extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
   }
 }
 
-export class PlatformerTestScene extends Scene {
+export class BobberScene extends Scene {
   constructor() {
-    super('PlatformerTestScene')
+    super('BobberScene')
   }
 
   #textbox?: GameObjects.Text
@@ -28,6 +28,7 @@ export class PlatformerTestScene extends Scene {
     body: Phaser.Physics.Arcade.StaticBody
   })[] = []
   #platforms?: Phaser.Tilemaps.TilemapLayer
+  #water?: Phaser.Tilemaps.TilemapLayer
   #spawnPlayer?: GameObjects.GameObject[]
 
   isRunning = false
@@ -46,12 +47,12 @@ export class PlatformerTestScene extends Scene {
       baseAcceleration = -30
       conditionalResultToUse = (this.#playerOne?.body.velocity?.x ?? 0) <= 0
       directionBeforeBraking = 'right'
-      this.#playerOne?.setFlipX(true)
+      // this.#playerOne?.setFlipX(true)
     } else if (direction === 'right') {
       baseAcceleration = 30
       conditionalResultToUse = (this.#playerOne?.body.velocity?.x ?? 0) >= 0
       directionBeforeBraking = 'left'
-      this.#playerOne?.setFlipX(false)
+      // this.#playerOne?.setFlipX(false)
     } else {
       return
     }
@@ -71,35 +72,26 @@ export class PlatformerTestScene extends Scene {
   }
 
   preload() {
-    this.load.image('kiwi', './kiwi.png')
+    this.load.image('player', './bobber/player.png')
     this.load.image('enemy', './enemy.png')
-    this.load.image('tiles', './platyKiwi/platyKiwi.png')
-    this.load.tilemapTiledJSON('tilemapLevel1', './platyKiwi/level1.json')
+    this.load.image('tiles', './bobber/tiles.png')
+    this.load.tilemapTiledJSON('tilemapLevel1', './bobber/level1.json')
   }
 
   create() {
     this.physics.world.setBounds(0, 0, WIDTH * 11, HEIGHT)
     this.cameras.main.setBounds(0, 0, 1024 * 4, HEIGHT)
 
-    this.#textbox = this.add.text(
-      WIDTH / 2,
-      HEIGHT / 2,
-      'Welcome to Phaser x Vite!',
-      {
-        color: '#FFF',
-        fontFamily: 'monospace',
-        fontSize: '26px',
-      }
-    )
-
     const map = this.make.tilemap({ key: 'tilemapLevel1' })
-    const tileset = map.addTilesetImage('platyKiwi', 'tiles')
+    const tileset = map.addTilesetImage('tiles', 'tiles')
     if (tileset) {
       this.#spawnPlayer = map.createFromObjects('Spawn', {
         name: 'playerSpawn',
       })
       this.#platforms = map.createLayer('platforms', tileset)!
       this.#platforms!.setCollisionByExclusion([-1], true)
+      this.#water = map.createLayer('water', tileset)!
+      this.#water!.setCollisionByExclusion([-1], true)
       //@ts-ignore
       const killObjects = map.createLayer('kill', tileset)
     }
@@ -126,7 +118,7 @@ export class PlatformerTestScene extends Scene {
     this.#playerOne = this.physics.add.sprite(
       this.#spawnPlayer[0].x,
       this.#spawnPlayer[0].y,
-      'kiwi'
+      'player'
     )
 
     this.#playerOne.brakingInfo = {
@@ -135,15 +127,13 @@ export class PlatformerTestScene extends Scene {
     }
     this.#playerOne.keyInfo = { left: false, right: false }
 
-    this.#playerOne.setCollideWorldBounds(true, 0.1, 0.1, true)
+    //   this.#playerOne.setCollideWorldBounds(true, 0.1, 0.1, true)
 
     // this.#playerOne.setBounce(0.1, 0.1)
 
     this.#playerOne.setDamping(true)
     this.cameras.main.startFollow(this.#playerOne, true)
     // this.cameras.main.setDeadzone(400, 200);
-
-    this.#textbox.setOrigin(0.5, 0.5)
 
     const dustCollision = (
       [minX, maxX]: [number, number],
@@ -157,7 +147,7 @@ export class PlatformerTestScene extends Scene {
         pixel.setGravityY(-GRAVITY + 60)
 
         // Set properties on the physics body, if desired
-        pixel.body.setCollideWorldBounds(true)
+        //   pixel.body.setCollideWorldBounds(true)
         pixel.body.setBounce(0.5)
         pixel.body.setVelocity(
           Phaser.Math.Between(-20, 20),
@@ -316,6 +306,19 @@ export class PlatformerTestScene extends Scene {
 
         // down && onHitBottom(playerBody.gameObject)
       })
+    }
+
+    if (this.#water) {
+      stickyMessage('wut')
+      const collider = this.physics.add.collider(
+        this.#playerOne,
+        this.#water,
+        () => {
+          toastMessage('yoojlksdajf')
+          this.#playerOne?.setGravityY(-GRAVITY + 10)
+        }
+      )
+      collider.overlapOnly = true
     }
     // Listen for the 'worldbounds' event
 
