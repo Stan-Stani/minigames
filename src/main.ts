@@ -71,10 +71,11 @@ const config: Phaser.Types.Core.GameConfig = {
     arcade: {
       // pixels per second
       gravity: { y: GRAVITY },
-      // debug: true
+      debug: true
     },
   },
-  scene: [MenuScene, PlatformerTestScene, BobberScene],
+  // scene: [MenuScene, PlatformerTestScene, BobberScene],
+  scene: [BobberScene],
   pixelArt: true,
   scale: {
     parent: 'game-wrapper',

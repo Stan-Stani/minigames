@@ -81,6 +81,7 @@ export class BobberScene extends Scene {
   create() {
     this.physics.world.setBounds(0, 0, WIDTH * 11, HEIGHT)
     this.cameras.main.setBounds(0, 0, 1024 * 4, HEIGHT)
+   
 
     const map = this.make.tilemap({ key: 'tilemapLevel1' })
     const tileset = map.addTilesetImage('tiles', 'tiles')
@@ -120,6 +121,7 @@ export class BobberScene extends Scene {
       this.#spawnPlayer[0].y,
       'player'
     )
+    this.#playerOne?.body.setSize(undefined, this.#playerOne.body.height * (2/3), false)
 
     this.#playerOne.brakingInfo = {
       isBraking: false,
@@ -315,7 +317,7 @@ export class BobberScene extends Scene {
         this.#water,
         () => {
           toastMessage('yoojlksdajf')
-          this.#playerOne?.setGravityY(-GRAVITY + 10)
+          this.#playerOne?.setGravityY(-GRAVITY)
         }
       )
       collider.overlapOnly = true
