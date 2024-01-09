@@ -14,6 +14,7 @@ interface IPlayer extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
     right: boolean
     left: boolean
   }
+  waterCollider: Phaser.Types.Physics.Arcade.ImageWithDynamicBody
 }
 
 export class BobberScene extends Scene {
@@ -89,6 +90,7 @@ export class BobberScene extends Scene {
       this.#spawnPlayer = map.createFromObjects('Spawn', {
         name: 'playerSpawn',
       })
+      if (!this.#spawnPlayer) throw new Error()
       this.#platforms = map.createLayer('platforms', tileset)!
       this.#platforms!.setCollisionByExclusion([-1], true)
       this.#water = map.createLayer('water', tileset)!
@@ -96,7 +98,7 @@ export class BobberScene extends Scene {
       //@ts-ignore
       const killObjects = map.createLayer('kill', tileset)
     }
-
+    if (!this.#spawnPlayer) throw new Error()
     this.textures.generate('ground', {
       data: ['1'],
       pixelWidth: WIDTH,
@@ -115,13 +117,12 @@ export class BobberScene extends Scene {
     //     .refreshBody(),
     // ]
 
-    console.log(this.#spawnPlayer)
     this.#playerOne = this.physics.add.sprite(
       this.#spawnPlayer[0].x,
       this.#spawnPlayer[0].y,
       'player'
-    )
-    this.#playerOne?.body.setSize(undefined, this.#playerOne.body.height * (2/3), false)
+    ) as IPlayer
+    this.#playerOne?.body
 
     this.#playerOne.brakingInfo = {
       isBraking: false,
@@ -129,6 +130,12 @@ export class BobberScene extends Scene {
     }
     this.#playerOne.keyInfo = { left: false, right: false }
 
+    this.#playerOne.waterCollider = this.physics.add.image(this.#spawnPlayer[0].x, this.#spawnPlayer[0].y, 'player')
+    this.#playerOne.waterCollider.setVisible(false)
+    this.#playerOne.waterCollider.body.setSize(this.#playerOne.body.width, this.#playerOne.body.height * (2/3), false)
+    this.#playerOne.waterCollider.body.setAllowGravity(false)
+  
+    this.#playerOne.waterCollider.debugBodyColor = 0x00ff00
     //   this.#playerOne.setCollideWorldBounds(true, 0.1, 0.1, true)
 
     // this.#playerOne.setBounce(0.1, 0.1)
@@ -311,13 +318,13 @@ export class BobberScene extends Scene {
     }
 
     if (this.#water) {
-      stickyMessage('wut')
       const collider = this.physics.add.collider(
         this.#playerOne,
         this.#water,
-        () => {
-          toastMessage('yoojlksdajf')
-          this.#playerOne?.setGravityY(-GRAVITY)
+        (thing) => {
+          // toastMessage('yoojlksdajf')
+          toastMessage(thing)
+          this.#playerOne?.body.setAllowGravity(false)
         }
       )
       collider.overlapOnly = true
@@ -342,6 +349,11 @@ export class BobberScene extends Scene {
     )
     stickyMessage('brakingInfo:', this.#playerOne?.brakingInfo)
     if (!this.#playerOne) return
+
+    this.#playerOne.waterCollider.body.x = this.#playerOne.body.x
+    this.#playerOne.waterCollider.x = this.#playerOne.x
+    this.#playerOne.waterCollider.body.y = this.#playerOne.body.y
+    this.#playerOne.waterCollider.y = this.#playerOne.y
 
     // Don't waste time calculating super small velocity endlessly for drag
     if (
