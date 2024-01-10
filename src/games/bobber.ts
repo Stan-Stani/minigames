@@ -1,5 +1,5 @@
 import { GameObjects, Scene } from 'phaser'
-import { stickyMessage, toastMessage } from '../debugging/tools'
+import { clearStickyMessage, stickyMessage, toastMessage } from '../debugging/tools'
 const WIDTH = 256
 const HEIGHT = 240
 const GRAVITY = 128
@@ -119,7 +119,7 @@ export class BobberScene extends Scene {
 
     this.#playerOne = this.physics.add.sprite(
       this.#spawnPlayer[0].x,
-      this.#spawnPlayer[0].y,
+      this.#spawnPlayer[0].y -50,
       'player'
     ) as IPlayer
     this.#playerOne?.body
@@ -130,12 +130,12 @@ export class BobberScene extends Scene {
     }
     this.#playerOne.keyInfo = { left: false, right: false }
 
-    this.#playerOne.waterCollider = this.physics.add.image(this.#spawnPlayer[0].x, this.#spawnPlayer[0].y, 'player')
-    this.#playerOne.waterCollider.setVisible(false)
-    this.#playerOne.waterCollider.body.setSize(this.#playerOne.body.width, this.#playerOne.body.height * (2/3), false)
-    this.#playerOne.waterCollider.body.setAllowGravity(false)
+    // this.#playerOne.waterCollider = this.physics.add.image(this.#spawnPlayer[0].x, this.#spawnPlayer[0].y, 'player')
+    // // this.#playerOne.waterCollider.setVisible(false)
+    // this.#playerOne.waterCollider.body.setSize(this.#playerOne.body.width, this.#playerOne.body.height * (2/3), false)
+    // this.#playerOne.waterCollider.body.setAllowGravity(false)
   
-    this.#playerOne.waterCollider.debugBodyColor = 0x00ff00
+    // this.#playerOne.waterCollider.debugBodyColor = 0x00ff00
     //   this.#playerOne.setCollideWorldBounds(true, 0.1, 0.1, true)
 
     // this.#playerOne.setBounce(0.1, 0.1)
@@ -317,18 +317,42 @@ export class BobberScene extends Scene {
       })
     }
 
-    if (this.#water) {
-      const collider = this.physics.add.collider(
-        this.#playerOne,
-        this.#water,
-        (thing) => {
-          // toastMessage('yoojlksdajf')
-          toastMessage(thing)
-          this.#playerOne?.body.setAllowGravity(false)
-        }
-      )
-      collider.overlapOnly = true
-    }
+    // if (this.#water) {
+    //   stickyMessage(this.#playerOne)
+    //   stickyMessage(this.#water)
+    //   const collider = this.physics.add.collider(
+    //     this.#playerOne,
+    //     this.#water,
+    //     (thing) => {
+    //       console.log('water collided')
+    //       // this.#playerOne?.body.setAllowGravity(false)
+    //     },
+    //     (ob1, ob2) => {
+    //       console.log(ob1, ob2)
+    //     }
+    //   )
+      
+    // }
+
+    // if (this.#water) {
+    //   stickyMessage(this.#playerOne)
+    //   stickyMessage(this.#water)
+    //   const overlap = this.physics.add.overlap(
+    //     this.#playerOne,
+    //     this.#water,
+    //     (thing) => {
+    //       console.log('water collided')
+    //       // this.#playerOne?.body.setAllowGravity(false)
+    //     },
+    //     (ob1, ob2) => {
+    //       console.count('lol')
+    //     }
+    //   )
+      
+    // }
+
+
+
     // Listen for the 'worldbounds' event
 
     // // You can also check for collisions with other objects
@@ -350,10 +374,10 @@ export class BobberScene extends Scene {
     stickyMessage('brakingInfo:', this.#playerOne?.brakingInfo)
     if (!this.#playerOne) return
 
-    this.#playerOne.waterCollider.body.x = this.#playerOne.body.x
-    this.#playerOne.waterCollider.x = this.#playerOne.x
-    this.#playerOne.waterCollider.body.y = this.#playerOne.body.y
-    this.#playerOne.waterCollider.y = this.#playerOne.y
+    // stickyMessage(this.#playerOne.waterCollider.body.x)
+    // this.#playerOne.waterCollider.body.x = this.#playerOne.body.x
+    // this.#playerOne.waterCollider.body.y = this.#playerOne.body.y
+  
 
     // Don't waste time calculating super small velocity endlessly for drag
     if (
@@ -387,14 +411,11 @@ export class BobberScene extends Scene {
       }
     }
 
-    if (!this.#textbox) {
-      return
-    }
+    
 
     // @ts-ignore
     // stickyMessage(this.#playerOne?.body?.drag)
 
-    this.#textbox.rotation += 0.0005 * delta
     // stickyMessage(this.#playerOne?.body?.velocity)
 
     const friction = 0.35 // friction coefficient
@@ -412,6 +433,15 @@ export class BobberScene extends Scene {
       //   }
       // }
 
+      const tile = this.#water?.getTileAtWorldXY(this.#playerOne.body.x + this.#playerOne.body.width / 2, this.#playerOne.body.y + this.#playerOne.body.height)
+      let isInWater = false
+      console.log(tile?.index)
+      if (tile?.index === 17 || tile?.index === 33) {
+        isInWater = true
+        
+      }
+      stickyMessage({isInWater})
+
       if (!this.#playerOne.body.blocked.down) {
         this.#playerOne?.setDrag(0.75, 0)
         this.isOnGround = false
@@ -422,6 +452,5 @@ export class BobberScene extends Scene {
         }
       }
     }
-    // clearStickyMessage()
   }
 }
