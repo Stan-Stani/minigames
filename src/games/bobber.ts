@@ -1,5 +1,9 @@
 import { GameObjects, Scene } from 'phaser'
-import { clearStickyMessage, stickyMessage, toastMessage } from '../debugging/tools'
+import {
+  clearStickyMessage,
+  stickyMessage,
+  toastMessage,
+} from '../debugging/tools'
 const WIDTH = 256
 const HEIGHT = 240
 const GRAVITY = 128
@@ -14,7 +18,7 @@ interface IPlayer extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
     right: boolean
     left: boolean
   }
-  waterCollider: Phaser.Types.Physics.Arcade.ImageWithDynamicBody
+  isImmersed: boolean
 }
 
 export class BobberScene extends Scene {
@@ -72,6 +76,46 @@ export class BobberScene extends Scene {
     }
   }
 
+  getTileAtBottomOfSprite(
+    sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody,
+    tileLayer: Phaser.Tilemaps.TilemapLayer,
+    tileIndex?: number
+  ): Phaser.Tilemaps.Tile | null {
+    let tile: Phaser.Tilemaps.Tile | null = tileLayer.getTileAtWorldXY(
+      sprite.body.x + sprite.body.halfWidth,
+      sprite.body.y + sprite.body.height
+    )
+    if (tile) {
+      if (tileIndex && tileIndex === tile?.index) {
+        return tile
+      } else if (!tileIndex) {
+        return tile
+      }
+    }
+    return null
+  }
+
+  calculateVerticalOverlap(
+    sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody,
+    tile: Phaser.Tilemaps.Tile
+  ) {
+    let spriteBounds = sprite.getBounds()
+    let tileBounds = tile.getBounds()
+
+    // Determine the overlapping rectangle
+    let intersection = Phaser.Geom.Rectangle.Intersection(
+      spriteBounds,
+      tileBounds as Phaser.Geom.Rectangle
+    )
+
+    // Calculate the percentage of overlap
+    let overlapHeight = intersection.height
+    let spriteHeight = spriteBounds.height
+    let overlapPercentage = (overlapHeight / spriteHeight) * 100
+
+    return overlapPercentage
+  }
+
   preload() {
     this.load.image('player', './bobber/player.png')
     this.load.image('enemy', './enemy.png')
@@ -82,7 +126,6 @@ export class BobberScene extends Scene {
   create() {
     this.physics.world.setBounds(0, 0, WIDTH * 11, HEIGHT)
     this.cameras.main.setBounds(0, 0, 1024 * 4, HEIGHT)
-   
 
     const map = this.make.tilemap({ key: 'tilemapLevel1' })
     const tileset = map.addTilesetImage('tiles', 'tiles')
@@ -119,7 +162,7 @@ export class BobberScene extends Scene {
 
     this.#playerOne = this.physics.add.sprite(
       this.#spawnPlayer[0].x,
-      this.#spawnPlayer[0].y -50,
+      this.#spawnPlayer[0].y - 50,
       'player'
     ) as IPlayer
     this.#playerOne?.body
@@ -129,18 +172,9 @@ export class BobberScene extends Scene {
       directionBeforeBraking: undefined,
     }
     this.#playerOne.keyInfo = { left: false, right: false }
-
-    // this.#playerOne.waterCollider = this.physics.add.image(this.#spawnPlayer[0].x, this.#spawnPlayer[0].y, 'player')
-    // // this.#playerOne.waterCollider.setVisible(false)
-    // this.#playerOne.waterCollider.body.setSize(this.#playerOne.body.width, this.#playerOne.body.height * (2/3), false)
-    // this.#playerOne.waterCollider.body.setAllowGravity(false)
-  
-    // this.#playerOne.waterCollider.debugBodyColor = 0x00ff00
-    //   this.#playerOne.setCollideWorldBounds(true, 0.1, 0.1, true)
-
-    // this.#playerOne.setBounce(0.1, 0.1)
-
     this.#playerOne.setDamping(true)
+    this.#playerOne.isImmersed = false
+
     this.cameras.main.startFollow(this.#playerOne, true)
     // this.cameras.main.setDeadzone(400, 200);
 
@@ -320,23 +354,6 @@ export class BobberScene extends Scene {
     // if (this.#water) {
     //   stickyMessage(this.#playerOne)
     //   stickyMessage(this.#water)
-    //   const collider = this.physics.add.collider(
-    //     this.#playerOne,
-    //     this.#water,
-    //     (thing) => {
-    //       console.log('water collided')
-    //       // this.#playerOne?.body.setAllowGravity(false)
-    //     },
-    //     (ob1, ob2) => {
-    //       console.log(ob1, ob2)
-    //     }
-    //   )
-      
-    // }
-
-    // if (this.#water) {
-    //   stickyMessage(this.#playerOne)
-    //   stickyMessage(this.#water)
     //   const overlap = this.physics.add.overlap(
     //     this.#playerOne,
     //     this.#water,
@@ -348,10 +365,8 @@ export class BobberScene extends Scene {
     //       console.count('lol')
     //     }
     //   )
-      
+
     // }
-
-
 
     // Listen for the 'worldbounds' event
 
@@ -366,6 +381,10 @@ export class BobberScene extends Scene {
   }
 
   update(_time: number, delta: number) {
+    stickyMessage(
+      'playerOne Net Gravity:',
+      (this.#playerOne?.body.gravity.y ?? 0) + GRAVITY
+    )
     stickyMessage('playerOne Velocity:', this.#playerOne?.body?.velocity)
     stickyMessage(
       'playerOne Acceleration:',
@@ -373,11 +392,6 @@ export class BobberScene extends Scene {
     )
     stickyMessage('brakingInfo:', this.#playerOne?.brakingInfo)
     if (!this.#playerOne) return
-
-    // stickyMessage(this.#playerOne.waterCollider.body.x)
-    // this.#playerOne.waterCollider.body.x = this.#playerOne.body.x
-    // this.#playerOne.waterCollider.body.y = this.#playerOne.body.y
-  
 
     // Don't waste time calculating super small velocity endlessly for drag
     if (
@@ -411,15 +425,10 @@ export class BobberScene extends Scene {
       }
     }
 
-    
-
     // @ts-ignore
     // stickyMessage(this.#playerOne?.body?.drag)
 
     // stickyMessage(this.#playerOne?.body?.velocity)
-
-    const friction = 0.35 // friction coefficient
-    const deltaInSeconds = delta / 1000 // Convert delta to seconds
 
     // Apply friction factor to the player's velocity and make it frame rate independent
 
@@ -433,14 +442,47 @@ export class BobberScene extends Scene {
       //   }
       // }
 
-      const tile = this.#water?.getTileAtWorldXY(this.#playerOne.body.x + this.#playerOne.body.width / 2, this.#playerOne.body.y + this.#playerOne.body.height)
-      let isInWater = false
-      console.log(tile?.index)
+      const tile = this.#water?.getTileAtWorldXY(
+        this.#playerOne.body.x + this.#playerOne.body.width / 2,
+        this.#playerOne.body.y + this.#playerOne.body.height / 3
+      )
+      this.#playerOne.isImmersed = false
       if (tile?.index === 17 || tile?.index === 33) {
-        isInWater = true
-        
+        this.#playerOne.isImmersed = true
       }
-      stickyMessage({isInWater})
+      stickyMessage({ isImmersed: this.#playerOne.isImmersed })
+
+      if (this.#playerOne.isImmersed) {
+        this.#playerOne.setGravityY(-2 * GRAVITY)
+      } else {
+        this.#playerOne.setGravityY(0)
+      }
+
+  
+      if (this.#water) {
+            // If we're passing through the top layer of water
+        const tile = this.getTileAtBottomOfSprite(
+          this.#playerOne,
+          this.#water,
+          17
+        )
+        stickyMessage(tile?.index + ' hey ')
+
+        if (tile) {
+          const percentOverlap = this.calculateVerticalOverlap(
+            this.#playerOne,
+            tile
+          )
+
+          this.#playerOne.setGravityY(-GRAVITY * (percentOverlap / 100))
+
+          stickyMessage(percentOverlap)
+        } else if (this.#playerOne.isImmersed) {
+          this.#playerOne.setGravityY(-2 * GRAVITY)
+        }
+
+
+      }
 
       if (!this.#playerOne.body.blocked.down) {
         this.#playerOne?.setDrag(0.75, 0)

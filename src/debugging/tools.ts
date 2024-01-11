@@ -5,6 +5,9 @@ export function stickyMessage(...messages: any) {
 
   identifier = getStackIdentifier()
   for (const message of messages) {
+    if (message === undefined || message === null) {
+      throw new Error('Current message is ' + message)
+    }
     if (message.hasOwnProperty('_id')) {
       identifier = message._id
       continue
