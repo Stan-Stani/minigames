@@ -19,6 +19,7 @@ interface IPlayer extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
     left: boolean
   }
   isImmersed: boolean
+  isDoneBobbing: boolean
 }
 
 export class BobberScene extends Scene {
@@ -174,6 +175,7 @@ export class BobberScene extends Scene {
     this.#playerOne.keyInfo = { left: false, right: false }
     this.#playerOne.setDamping(true)
     this.#playerOne.isImmersed = false
+    this.#playerOne.isDoneBobbing = false
 
     this.cameras.main.startFollow(this.#playerOne, true)
     // this.cameras.main.setDeadzone(400, 200);
@@ -446,21 +448,43 @@ export class BobberScene extends Scene {
         this.#playerOne.body.x + this.#playerOne.body.width / 2,
         this.#playerOne.body.y + this.#playerOne.body.height / 3
       )
-      this.#playerOne.isImmersed = false
+      let wasImmersedPreviousFrame = this.#playerOne.isImmersed
       if (tile?.index === 17 || tile?.index === 33) {
         this.#playerOne.isImmersed = true
+      } else {
+        this.#playerOne.isImmersed = false
+      }
+      if (this.#playerOne.isImmersed !== wasImmersedPreviousFrame) {
+        const magnitudeReduction = 1
+        const playerVelocity = this.#playerOne.body.velocity.y
+        if (playerVelocity > 0) {
+          this.#playerOne.body.setVelocityY(playerVelocity - magnitudeReduction)
+        } else if (playerVelocity < 0) {
+          this.#playerOne.body.setVelocityY(playerVelocity + magnitudeReduction)
+        }
       }
       stickyMessage({ isImmersed: this.#playerOne.isImmersed })
 
-      if (this.#playerOne.isImmersed) {
-        this.#playerOne.setGravityY(-2 * GRAVITY)
-      } else {
-        this.#playerOne.setGravityY(0)
+      if (!this.#playerOne.isDoneBobbing) {
+        if (this.#playerOne.isImmersed) {
+          this.#playerOne.setGravityY(-2 * GRAVITY)
+        } else {
+          this.#playerOne.setGravityY(0)
+        }
       }
 
-  
+      if (
+        this.#playerOne.body.velocity.y < 10 &&
+        this.#playerOne.isImmersed &&
+        this.#playerOne.isImmersed !== wasImmersedPreviousFrame
+      ) {
+        this.#playerOne.setGravityY(-GRAVITY)
+        this.#playerOne.body.setVelocityY(0)
+        this.#playerOne.isDoneBobbing = true
+      }
+
       if (this.#water) {
-            // If we're passing through the top layer of water
+        // If we're passing through the top layer of water
         const tile = this.getTileAtBottomOfSprite(
           this.#playerOne,
           this.#water,
@@ -474,14 +498,12 @@ export class BobberScene extends Scene {
             tile
           )
 
-          this.#playerOne.setGravityY(-GRAVITY * (percentOverlap / 100))
+          // this.#playerOne.setGravityY(-GRAVITY * (percentOverlap / 100))
 
           stickyMessage(percentOverlap)
         } else if (this.#playerOne.isImmersed) {
           this.#playerOne.setGravityY(-2 * GRAVITY)
         }
-
-
       }
 
       if (!this.#playerOne.body.blocked.down) {
