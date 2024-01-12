@@ -8,6 +8,11 @@ const WIDTH = 256
 const HEIGHT = 240
 const GRAVITY = 128
 
+interface spawnLocation extends GameObjects.GameObject {
+  x: number
+  y: number
+}
+
 interface IPlayer extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
   brakingInfo: {
     isBraking: boolean
@@ -35,7 +40,8 @@ export class BobberScene extends Scene {
   })[] = []
   #platforms?: Phaser.Tilemaps.TilemapLayer
   #water?: Phaser.Tilemaps.TilemapLayer
-  #spawnPlayer?: GameObjects.GameObject[]
+  #kill?: Phaser.Tilemaps.TilemapLayer
+  #spawnPlayer?: spawnLocation[]
 
   isRunning = false
   isOnGround = false
@@ -127,6 +133,8 @@ export class BobberScene extends Scene {
   create() {
     this.physics.world.setBounds(0, 0, WIDTH * 11, HEIGHT)
     this.cameras.main.setBounds(0, 0, 1024 * 4, HEIGHT)
+    
+    
 
     const map = this.make.tilemap({ key: 'tilemapLevel1' })
     const tileset = map.addTilesetImage('tiles', 'tiles')
@@ -134,13 +142,39 @@ export class BobberScene extends Scene {
       this.#spawnPlayer = map.createFromObjects('Spawn', {
         name: 'playerSpawn',
       })
+      this.#playerOne = this.physics.add.sprite(
+        this.#spawnPlayer[0].x,
+        this.#spawnPlayer[0].y - 50,
+        'player'
+      ) as IPlayer
+      this.#playerOne.setCircle(8, undefined, 2)
+      this.#playerOne?.body.setBounce(0.3)
+  
+      this.#playerOne.brakingInfo = {
+        isBraking: false,
+        directionBeforeBraking: undefined,
+      }
+      this.#playerOne.keyInfo = { left: false, right: false }
+      this.#playerOne.setDamping(true)
+      this.#playerOne.isImmersed = false
+      this.#playerOne.isDoneBobbing = false
+      this.#playerOne.setDepth(1)
+      this.cameras.main.startFollow(this.#playerOne, true)
+  
       if (!this.#spawnPlayer) throw new Error()
-      this.#platforms = map.createLayer('platforms', tileset)!
-      this.#platforms!.setCollisionByExclusion([-1], true)
       this.#water = map.createLayer('water', tileset)!
       this.#water!.setCollisionByExclusion([-1], true)
-      //@ts-ignore
-      const killObjects = map.createLayer('kill', tileset)
+      this.#platforms = map.createLayer('platforms', tileset)!
+      this.#platforms!.setCollisionByExclusion([-1], true)
+      this.#kill = map.createLayer('kill', tileset)
+      this.#kill!.setCollisionByExclusion([-1], true)
+
+      this.physics.add.collider(this.#playerOne, this.#kill, () => {
+        this.#playerOne?.setPosition(
+          this.#spawnPlayer[0].x,
+          this.#spawnPlayer[0].y - 50
+        )
+      })
     }
     if (!this.#spawnPlayer) throw new Error()
     this.textures.generate('ground', {
@@ -161,23 +195,6 @@ export class BobberScene extends Scene {
     //     .refreshBody(),
     // ]
 
-    this.#playerOne = this.physics.add.sprite(
-      this.#spawnPlayer[0].x,
-      this.#spawnPlayer[0].y - 50,
-      'player'
-    ) as IPlayer
-    this.#playerOne?.body
-
-    this.#playerOne.brakingInfo = {
-      isBraking: false,
-      directionBeforeBraking: undefined,
-    }
-    this.#playerOne.keyInfo = { left: false, right: false }
-    this.#playerOne.setDamping(true)
-    this.#playerOne.isImmersed = false
-    this.#playerOne.isDoneBobbing = false
-
-    this.cameras.main.startFollow(this.#playerOne, true)
     // this.cameras.main.setDeadzone(400, 200);
 
     const dustCollision = (
@@ -232,8 +249,8 @@ export class BobberScene extends Scene {
         var left = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A)
 
         spaceBar.on('down', () => {
-          if (this.#playerOne?.body?.blocked.down) {
-            this.#playerOne?.setVelocityY(-100)
+          if (this.#playerOne?.isImmersed) {
+            this.#playerOne?.setVelocityY(100)
           }
         })
 
@@ -267,7 +284,6 @@ export class BobberScene extends Scene {
             this.#playerOne.keyInfo.left = true
             this.setHorizontalAcceleration('left')
             this.isRunning = true
-
             stickyMessage({ _id: 'left' }, 'left: down')
           })
           .on('up', () => {
@@ -481,6 +497,15 @@ export class BobberScene extends Scene {
         this.#playerOne.setGravityY(-GRAVITY)
         this.#playerOne.body.setVelocityY(0)
         this.#playerOne.isDoneBobbing = true
+      }
+
+      if (
+        this.#playerOne.isDoneBobbing &&
+        this.#playerOne.isImmersed &&
+        (this.#playerOne.keyInfo.left || this.#playerOne.keyInfo.right)
+      ) {
+        this.#playerOne.setVelocityY(-20)
+        this.#playerOne.isDoneBobbing = false
       }
 
       if (this.#water) {

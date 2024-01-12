@@ -24,6 +24,7 @@
   "compounds": [
     {
       "name": "Launch Vite and Chrome",
+      "stopAll": true,
       "configurations": [
         "Launch Vite Dev Server",
         "Launch Chrome against localhost"
