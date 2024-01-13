@@ -22,6 +22,7 @@ interface IPlayer extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
   keyInfo: {
     right: boolean
     left: boolean
+    down: boolean
   }
   isImmersed: boolean
   isDoneBobbing: boolean
@@ -78,6 +79,8 @@ export class BobberScene extends Scene {
         directionBeforeBraking: directionBeforeBraking,
       }
       this.#playerOne?.setAccelerationX(2 * baseAcceleration)
+    } else if (this.#playerOne.isImmersed) {
+      this.#playerOne.setAccelerationX(baseAcceleration * 2)
     } else if (!this.isOnGround) {
       this.#playerOne.setAccelerationX(baseAcceleration / 2)
     }
@@ -133,8 +136,6 @@ export class BobberScene extends Scene {
   create() {
     this.physics.world.setBounds(0, 0, WIDTH * 11, HEIGHT)
     this.cameras.main.setBounds(0, 0, 1024 * 4, HEIGHT)
-    
-    
 
     const map = this.make.tilemap({ key: 'tilemapLevel1' })
     const tileset = map.addTilesetImage('tiles', 'tiles')
@@ -149,7 +150,7 @@ export class BobberScene extends Scene {
       ) as IPlayer
       this.#playerOne.setCircle(8, undefined, 2)
       this.#playerOne?.body.setBounce(0.3)
-  
+
       this.#playerOne.brakingInfo = {
         isBraking: false,
         directionBeforeBraking: undefined,
@@ -160,7 +161,7 @@ export class BobberScene extends Scene {
       this.#playerOne.isDoneBobbing = false
       this.#playerOne.setDepth(1)
       this.cameras.main.startFollow(this.#playerOne, true)
-  
+
       if (!this.#spawnPlayer) throw new Error()
       this.#water = map.createLayer('water', tileset)!
       this.#water!.setCollisionByExclusion([-1], true)
@@ -174,6 +175,7 @@ export class BobberScene extends Scene {
           this.#spawnPlayer[0].x,
           this.#spawnPlayer[0].y - 50
         )
+        this.#playerOne?.setVelocity(0, 0)
       })
     }
     if (!this.#spawnPlayer) throw new Error()
@@ -241,6 +243,7 @@ export class BobberScene extends Scene {
         if (!this.input.keyboard) {
           throw new Error('Keyboard property of input is falsy')
         }
+        if (!this.#playerOne) return
 
         var spaceBar = this.input.keyboard.addKey(
           Phaser.Input.Keyboard.KeyCodes.SPACE
@@ -248,11 +251,17 @@ export class BobberScene extends Scene {
         var right = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D)
         var left = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A)
 
-        spaceBar.on('down', () => {
-          if (this.#playerOne?.isImmersed) {
-            this.#playerOne?.setVelocityY(100)
-          }
-        })
+        spaceBar
+          .on('down', () => {
+            if (this.#playerOne?.isImmersed) {
+              this.#playerOne?.setVelocityY(100)
+              this.#playerOne.keyInfo.down = true
+            }
+          })
+          .on('up', () => {
+            if (!this.#playerOne) return
+            this.#playerOne.keyInfo.down = false
+          })
 
         right
           .on('down', () => {
@@ -499,13 +508,14 @@ export class BobberScene extends Scene {
         this.#playerOne.isDoneBobbing = true
       }
 
-      if (
-        this.#playerOne.isDoneBobbing &&
-        this.#playerOne.isImmersed &&
-        (this.#playerOne.keyInfo.left || this.#playerOne.keyInfo.right)
-      ) {
-        this.#playerOne.setVelocityY(-20)
-        this.#playerOne.isDoneBobbing = false
+      if (this.#playerOne.isDoneBobbing && this.#playerOne.isImmersed) {
+        if (this.#playerOne.keyInfo.left || this.#playerOne.keyInfo.right) {
+          this.#playerOne.setVelocityY(-20)
+          this.#playerOne.isDoneBobbing = false
+        }
+        if (this.#playerOne.keyInfo.down) {
+          this.#playerOne.isDoneBobbing = false
+        }
       }
 
       if (this.#water) {
