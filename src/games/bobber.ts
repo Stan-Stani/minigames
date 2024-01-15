@@ -219,6 +219,7 @@ export class BobberScene extends Scene {
         )
 
         this.physics.add.collider(pixel, this.#platforms!)
+        this.physics.add.collider(pixel, this.#kill!)
 
         this.time.delayedCall(
           5000,
