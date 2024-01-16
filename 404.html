@@ -14,15 +14,16 @@
   </head>
 
   <body>
-    <div class="take-up-viewport shelf-flex">
-      <div id="info" class="flex-grow-and-shrink">
-        <div id="log"></div>
-      </div>
-      <div id="game-wrapper" class="flex-grow-and-shrink">
-        <canvas id="game" class="flex-end"></canvas>
-      </div>
-    </div>
+    <script>
+      fetch('https://stan-stani.github.io/minigames/')
+        .then(response => response.text())
+        .then(html => {
+            // Replace the content of your page with the new HTML
+            document.body.innerHTML = html;
 
-    <script type="module" src="/src/main.ts"></script>
+            // Update the history without changing the URL
+            window.history.pushState({}, '', window.location.pathname);
+        })
+    </script>
   </body>
 </html>
