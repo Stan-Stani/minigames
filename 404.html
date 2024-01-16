@@ -9,7 +9,7 @@
                 var currentUrl = window.location.href;
     
                 // Redirect to the game page and pass the original URL as a query parameter
-                window.location.href = '/minigames?redirectedFrom=' + encodeURIComponent(currentUrl);
+                window.location.href = '/minigames?' + encodeURIComponent(currentUrl.split('/')[-1]);
             });
         </script>
     </head>
