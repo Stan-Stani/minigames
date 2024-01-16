@@ -1,29 +1,24 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta http-equiv="pragma" content="no-cache" />
-    <meta http-equiv="expires" content="0" />
-    <meta
-      http-equiv="cache-control"
-      content="no-cache, no-store, must-revalidate"
-    />
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + TS</title>
+    <title>Loading...</title>
+    <script type="text/javascript">
+      // When the 404 page loads
+      document.addEventListener('DOMContentLoaded', function () {
+        // Get the current URL
+        var currentUrl = window.location.href
+
+        const pathArr = currentUrl.split('/')
+        if (pathArr.length) {
+          window.location.href =
+            '/minigames?' + encodeURIComponent(pathArr[pathArr.length - 1])
+        } else {
+          window.location.href = 'minigames'
+        }
+      })
+    </script>
   </head>
-
   <body>
-    TEST
-    <div class="take-up-viewport shelf-flex">
-      <div id="info" class="flex-grow-and-shrink">
-        <div id="log"></div>
-      </div>
-      <div id="game-wrapper" class="flex-grow-and-shrink">
-        <canvas id="game" class="flex-end"></canvas>
-      </div>
-    </div>
-
-    <script type="module" src="/src/main.ts"></script>
+    <p>Just a moment...</p>
   </body>
 </html>
