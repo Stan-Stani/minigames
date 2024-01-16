@@ -1,19 +1,24 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <title>Loading...</title>
-        <script type="text/javascript">
-            // When the 404 page loads
-            document.addEventListener('DOMContentLoaded', function() {
-                // Get the current URL
-                var currentUrl = window.location.href;
-    
-                // Redirect to the game page and pass the original URL as a query parameter
-                window.location.href = '/minigames?' + encodeURIComponent(currentUrl.split('/')[currentUrl.length - 1]);
-            });
-        </script>
-    </head>
-    <body>
-        <p>Just a moment...</p>
-    </body>
+  <head>
+    <title>Loading...</title>
+    <script type="text/javascript">
+      // When the 404 page loads
+      document.addEventListener('DOMContentLoaded', function () {
+        // Get the current URL
+        var currentUrl = window.location.href
+
+        const pathArr = currentUrl.split('/')
+        if (pathArr.length) {
+          window.location.href =
+            '/minigames?' + encodeURIComponent(pathArr[pathArr.length - 1])
+        } else {
+          window.location.hret = 'minigames'
+        }
+      })
+    </script>
+  </head>
+  <body>
+    <p>Just a moment...</p>
+  </body>
 </html>
