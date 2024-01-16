@@ -1,29 +1,19 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta http-equiv="pragma" content="no-cache" />
-    <meta http-equiv="expires" content="0" />
-    <meta
-      http-equiv="cache-control"
-      content="no-cache, no-store, must-revalidate"
-    />
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>minigames</title>
-  </head>
-
-  <body>
-    <script>
-      fetch('https://stan-stani.github.io/minigames/')
-        .then(response => response.text())
-        .then(html => {
-            // Replace the content of your page with the new HTML
-            document.body.innerHTML = html;
-
-            // Update the history without changing the URL
-            window.history.pushState({}, '', window.location.pathname);
-        })
-    </script>
-  </body>
+    <head>
+        <title>Loading...</title>
+        <script type="text/javascript">
+            // When the 404 page loads
+            document.addEventListener('DOMContentLoaded', function() {
+                // Get the current URL
+                var currentUrl = window.location.href;
+    
+                // Redirect to the game page and pass the original URL as a query parameter
+                window.location.href = '/your-game-page.html?redirectedFrom=' + encodeURIComponent(currentUrl);
+            });
+        </script>
+    </head>
+    <body>
+        <p>Just a moment...</p>
+    </body>
 </html>
