@@ -5,11 +5,15 @@
     <script type="text/javascript">
       document.addEventListener('DOMContentLoaded', () => {
         const currentUrl = window.location.href
-        const pathArr = currentUrl.split('/')
+        const pathArr = currentUrl.split('/minigames/')
         if (pathArr.length) {
           console.log('pathArr:', {...pathArr})
+          let queryValue = pathArr[pathArr.length - 1]
+          if (queryValue[queryValue.length - 1] === '/') {
+            queryValue = queryValue.slice(0, queryValue.length - 1)
+          }
           window.location.href =
-            '/minigames?game=' + encodeURIComponent(pathArr[pathArr.length - 1])
+            '/minigames?game=' + encodeURIComponent(queryValue)
         } else {
           window.location.href = 'minigames'
           console.error("Couldn't parse URL")
