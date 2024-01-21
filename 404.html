@@ -7,6 +7,7 @@
         const currentUrl = window.location.href
         const pathArr = currentUrl.split('/')
         if (pathArr.length) {
+          console.info({pathArr})
           window.location.href =
             '/minigames?game=' + encodeURIComponent(pathArr[pathArr.length - 1])
         } else {
