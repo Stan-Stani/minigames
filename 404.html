@@ -7,12 +7,12 @@
         const currentUrl = window.location.href
         const pathArr = currentUrl.split('/')
         if (pathArr.length) {
-          console.info({pathArr})
+          console.log('pathArr:', {...pathArr})
           window.location.href =
             '/minigames?game=' + encodeURIComponent(pathArr[pathArr.length - 1])
         } else {
           window.location.href = 'minigames'
-          console.error("Couldn't parse URL", { pathArr })
+          console.error("Couldn't parse URL")
         }
       })
     </script>
