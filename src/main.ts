@@ -78,6 +78,8 @@ function getSceneToLoad(scenes: any[]) {
     const sceneToInit = scenes[sceneIndexToInit]
     scenes.splice(sceneIndexToInit, 1)
     scenes.unshift(sceneToInit)
+  } else {
+    console.error({sceneNames})
   }
   return scenes
 }
