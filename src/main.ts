@@ -1,7 +1,7 @@
 import './style.css'
 import { Game, Scene, WEBGL } from 'phaser'
-import { PlatformerTestScene } from './games/platformerTest';
-import { BobberScene } from './games/bobber';
+import { PlatformerTestScene } from './games/platformerTest'
+import { BobberScene } from './games/bobber'
 interface IMenuScene {
   menu: { scene: string; text: string }[]
 }
@@ -11,12 +11,14 @@ const GRAVITY = 128
 
 const canvas = document.getElementById('game') as HTMLCanvasElement
 
-const SCREEN_CENTER = [WIDTH / 2, HEIGHT / 2];
-const FONT_SIZE = 16;
-const LINE_HEIGHT = 21;
-const FONT_OPTIONS = {fontSize: `${FONT_SIZE}px`, fill: '#FFF', fontStyle: 'bold'}
-
-
+const SCREEN_CENTER = [WIDTH / 2, HEIGHT / 2]
+const FONT_SIZE = 16
+const LINE_HEIGHT = 21
+const FONT_OPTIONS = {
+  fontSize: `${FONT_SIZE}px`,
+  fill: '#FFF',
+  fontStyle: 'bold',
+}
 
 class MenuScene extends Scene implements IMenuScene {
   menu = [
@@ -59,7 +61,26 @@ class MenuScene extends Scene implements IMenuScene {
     this.setUpMenu(this.menu)
   }
 }
-
+// TS doesn't know that Scene class ends up with a name property at runtime
+// so we're type `any` for now.
+function getSceneToLoad(scenes: any[]) {
+  const queryString = window.location.search
+  const urlSearchParams = new URLSearchParams(queryString)
+  const gameQueryValue = urlSearchParams.get('game')
+  console.log(gameQueryValue)
+  const sceneNames = scenes.map(
+    (element) => element.name.toLowerCase().split('scene')[0]
+  )
+  const sceneIndexToInit = gameQueryValue
+    ? sceneNames.indexOf(gameQueryValue)
+    : 0
+  if (sceneIndexToInit > 0) {
+    const sceneToInit = scenes[sceneIndexToInit]
+    scenes.splice(sceneIndexToInit, 1)
+    scenes.unshift(sceneToInit)
+  }
+  return scenes
+}
 
 const config: Phaser.Types.Core.GameConfig = {
   type: WEBGL,
@@ -75,7 +96,7 @@ const config: Phaser.Types.Core.GameConfig = {
     },
   },
   // scene: [MenuScene, PlatformerTestScene, BobberScene],
-  scene: [BobberScene],
+  scene: getSceneToLoad([MenuScene, PlatformerTestScene, BobberScene]),
   pixelArt: true,
   scale: {
     parent: 'game-wrapper',
