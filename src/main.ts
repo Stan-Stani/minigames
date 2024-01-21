@@ -61,15 +61,14 @@ class MenuScene extends Scene implements IMenuScene {
     this.setUpMenu(this.menu)
   }
 }
-// TS doesn't know that Scene class ends up with a name property at runtime
-// so we're type `any` for now.
-function getSceneToLoad(scenes: any[]) {
+
+function getSceneToLoad(scenes: Scene[]) {
   const queryString = window.location.search
   const urlSearchParams = new URLSearchParams(queryString)
   const gameQueryValue = urlSearchParams.get('game')
   console.log(gameQueryValue)
   const sceneNames = scenes.map(
-    (element) => element.name.toLowerCase().split('scene')[0]
+    (element) => element.scene.key.toLowerCase().split('scene')[0]
   )
   const sceneIndexToInit = gameQueryValue
     ? sceneNames.indexOf(gameQueryValue)
@@ -98,7 +97,9 @@ const config: Phaser.Types.Core.GameConfig = {
     },
   },
   // scene: [MenuScene, PlatformerTestScene, BobberScene],
-  scene: getSceneToLoad([MenuScene, PlatformerTestScene, BobberScene]),
+  // TS doesn't recognize these as scenes for some reason
+  // so we're casting for now.
+  scene: getSceneToLoad(([MenuScene, PlatformerTestScene, BobberScene] as unknown as Scene[])),
   pixelArt: true,
   scale: {
     parent: 'game-wrapper',
