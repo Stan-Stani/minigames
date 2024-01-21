@@ -62,14 +62,15 @@ class MenuScene extends Scene implements IMenuScene {
   }
 }
 
-function getSceneToLoad(scenes: Scene[]) {
+function getSceneToLoad(sceneTuples: [string, Phaser.Types.Scenes.SceneType][]) {
   const queryString = window.location.search
   const urlSearchParams = new URLSearchParams(queryString)
   const gameQueryValue = urlSearchParams.get('game')
   console.log(gameQueryValue)
-  const sceneNames = scenes.map(
-    (element) => element.scene.key.toLowerCase().split('scene')[0]
+  const sceneNames = sceneTuples.map(
+    (tuple) => tuple[0]
   )
+  const scenes = sceneTuples.map((tuple) => tuple[1])
   const sceneIndexToInit = gameQueryValue
     ? sceneNames.indexOf(gameQueryValue)
     : 0
@@ -77,9 +78,8 @@ function getSceneToLoad(scenes: Scene[]) {
     const sceneToInit = scenes[sceneIndexToInit]
     scenes.splice(sceneIndexToInit, 1)
     scenes.unshift(sceneToInit)
-  } else {
-    console.error({sceneNames})
   }
+
   return scenes
 }
 
@@ -96,10 +96,7 @@ const config: Phaser.Types.Core.GameConfig = {
       // debug: true
     },
   },
-  // scene: [MenuScene, PlatformerTestScene, BobberScene],
-  // TS doesn't recognize these as scenes for some reason
-  // so we're casting for now.
-  scene: getSceneToLoad(([MenuScene, PlatformerTestScene, BobberScene] as unknown as Scene[])),
+  scene: getSceneToLoad([['menu', MenuScene], ['platformertest', PlatformerTestScene], ['bobber', BobberScene]]),
   pixelArt: true,
   scale: {
     parent: 'game-wrapper',
