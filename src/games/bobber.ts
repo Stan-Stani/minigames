@@ -148,7 +148,10 @@ export class BobberScene extends Scene {
         this.#spawnPlayer[0].y - 50,
         'player'
       ) as IPlayer
-      this.#playerOne.setCircle(8, undefined, 2)
+      this.#playerOne.body.setSize(10,14).setOffset(this.#playerOne.body.offset.x, 3)
+      const w = window as any;
+        w.playerOne = this.#playerOne
+      
       this.#playerOne?.body.setBounce(0.3)
 
       this.#playerOne.brakingInfo = {
