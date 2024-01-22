@@ -26,6 +26,8 @@ class MenuScene extends Scene implements IMenuScene {
     { scene: 'PlatformerTestScene', text: 'Platformer Logic Test' },
   ]
 
+  // https://newdocs.phaser.io/docs/3.55.2/Phaser.Tilemaps.TilemapLayer#putTilesAt
+
   preload() {}
 
   setUpMenu(menu: IMenuScene['menu']) {
@@ -100,10 +102,10 @@ const config: Phaser.Types.Core.GameConfig = {
   pixelArt: true,
   scale: {
     parent: 'game-wrapper',
-    // mode: Phaser.Scale.FIT,
+    mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    // width: WIDTH,
-    // height: HEIGHT
+    width: WIDTH,
+    height: HEIGHT
   },
 }
 

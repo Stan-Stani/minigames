@@ -30,7 +30,11 @@ body {
 }
 
 .flex-grow-and-shrink {
-  flex: 1;
+  flex: 1 1;
+}
+
+#info {
+  /* display: none; */
 }
 
 #log {
@@ -51,8 +55,12 @@ body {
   }
 }
 
+#game-wrapper {
+  max-width: 100%;
+}
+
 #game {
-  width: 100%;
+  /* width: 100%; */
 }
 
 .fade-in {
