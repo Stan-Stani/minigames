@@ -24,6 +24,16 @@ function isLocalStorageAvailable() {
 }
 
 const HAS_LOCAL_STORAGE = isLocalStorageAvailable()
+const toggleStanDebug = () => {
+  document.getElementById('info')?.classList.toggle('displayNone')
+}
+
+// apply local settings from local storage
+if (HAS_LOCAL_STORAGE) {
+  if (localStorage.getItem('show-stan-debug-stats') === 'TRUE') {
+    toggleStanDebug()
+  }
+}
 
 const WIDTH = 256
 const HEIGHT = 240
@@ -44,6 +54,7 @@ interface IMenuScene {
   mainMenuSeed: IMenuItemSeed[]
   settingsMenuSeed: IMenuItemSeed[]
   activeMenu: IBuiltMenu
+  mainMenu: IBuiltMenu
   settingsMenu: IBuiltMenu
 }
 
@@ -83,33 +94,41 @@ class MenuScene extends Scene implements IMenuScene {
     },
   ]
 
-  
-
   settingsMenuSeed: IMenuScene['settingsMenuSeed'] = [
     {
       id: 'debug',
-      text: `Debug Stats = False`,
+      text: `Debug Stats = ${
+        localStorage.getItem('show-stan-debug-stats') === 'TRUE'
+          ? 'TRUE'
+          : 'FALSE'
+      }`,
       action: () => {
         const item = this.settingsMenu.get('debug')
         if (HAS_LOCAL_STORAGE) {
-          localStorage.getItem('show-debug-stats')
+          const showDebugStats = localStorage.getItem('show-stan-debug-stats')
           if (item) {
-            if (
-              localStorage.getItem('show-debus-stats') === 'FALSE' ||
-              !localStorage.getItem('show-debug-stats')
-            ) {
-              localStorage.setItem('show-debug-stats', 'TRUE')
-              item.text = item.text.replace('False', 'True')
+            if (showDebugStats === 'FALSE' || !showDebugStats) {
+              localStorage.setItem('show-stan-debug-stats', 'TRUE')
+              item.text = item.text.replace('FALSE', 'TRUE')
+              document.getElementById('info')?.classList.toggle('displayNone')
             } else {
-              localStorage.setItem('show-debug-stats', 'FALSE')
-              item.text = item.text.replace('True', 'False')
+              localStorage.setItem('show-stan-debug-stats', 'FALSE')
+              item.text = item.text.replace('TRUE', 'FALSE')
+              document.getElementById('info')?.classList.toggle('displayNone')
             }
           }
         }
       },
     },
+    {
+      text: 'Back',
+      action: () => {
+        this.toggleToMenu(this.mainMenu)
+      }
+    }
   ]
   activeMenu: IMenuScene['activeMenu'] = new Map()
+  mainMenu: IMenuScene['mainMenu'] = new Map()
   settingsMenu: IMenuScene['settingsMenu'] = new Map()
 
   // https://newdocs.phaser.io/docs/3.55.2/Phaser.Tilemaps.TilemapLayer#putTilesAt
@@ -152,7 +171,7 @@ class MenuScene extends Scene implements IMenuScene {
     return builtMenu
   }
   create() {
-    this.setUpMenu(this.mainMenuSeed, true)
+    this.mainMenu = this.setUpMenu(this.mainMenuSeed, true)
     this.settingsMenu = this.setUpMenu(this.settingsMenuSeed, false)
   }
 }

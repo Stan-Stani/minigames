@@ -37,6 +37,10 @@ body {
   /* display: none; */
 }
 
+.displayNone {
+  display: none;
+}
+
 #log {
   /* position: absolute; */
   top: 0;
