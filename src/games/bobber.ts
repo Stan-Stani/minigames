@@ -23,6 +23,8 @@ interface IPlayer extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
     right: boolean
     left: boolean
     down: boolean
+    numPad1: boolean
+    numPad2: boolean
   }
   isImmersed: boolean
   isDoneBobbing: boolean
@@ -32,6 +34,8 @@ export class BobberScene extends Scene {
   constructor() {
     super('BobberScene')
   }
+  static teleportCheat = false
+  
 
   #textbox?: GameObjects.Text
   #playerOne?: IPlayer
@@ -46,6 +50,7 @@ export class BobberScene extends Scene {
 
   isRunning = false
   isOnGround = false
+  teleportDestination?: [number, number]
 
   /** Attempts to set the acceleration of the player in the given direction */
   setHorizontalAcceleration(direction: 'left' | 'right') {
@@ -148,17 +153,25 @@ export class BobberScene extends Scene {
         this.#spawnPlayer[0].y - 50,
         'player'
       ) as IPlayer
-      this.#playerOne.body.setSize(10,14).setOffset(this.#playerOne.body.offset.x, 3)
-      const w = window as any;
-        w.playerOne = this.#playerOne
-      
+      this.#playerOne.body
+        .setSize(10, 14)
+        .setOffset(this.#playerOne.body.offset.x, 3)
+      const w = window as any
+      w.playerOne = this.#playerOne
+
       this.#playerOne?.body.setBounce(0.3)
 
       this.#playerOne.brakingInfo = {
         isBraking: false,
         directionBeforeBraking: undefined,
       }
-      this.#playerOne.keyInfo = { left: false, right: false }
+      this.#playerOne.keyInfo = {
+        left: false,
+        right: false,
+        space: false,
+        numPadOne: false,
+        numPadOne: false,
+      }
       this.#playerOne.setDamping(true)
       this.#playerOne.isImmersed = false
       this.#playerOne.isDoneBobbing = false
@@ -249,11 +262,21 @@ export class BobberScene extends Scene {
         }
         if (!this.#playerOne) return
 
-        var spaceBar = this.input.keyboard.addKey(
+        const spaceBar = this.input.keyboard.addKey(
           Phaser.Input.Keyboard.KeyCodes.SPACE
         )
-        var right = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D)
-        var left = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A)
+        const right = this.input.keyboard.addKey(
+          Phaser.Input.Keyboard.KeyCodes.D
+        )
+        const left = this.input.keyboard.addKey(
+          Phaser.Input.Keyboard.KeyCodes.A
+        )
+        const numPadOne = this.input.keyboard.addKey(
+          Phaser.Input.Keyboard.KeyCodes.NUMPAD_ONE
+        )
+        const numPadTwo = this.input.keyboard.addKey(
+          Phaser.Input.Keyboard.KeyCodes.NUMPAD_TWO
+        )
 
         spaceBar
           .on('down', () => {
@@ -314,6 +337,21 @@ export class BobberScene extends Scene {
 
             stickyMessage({ _id: 'left' }, 'left: up')
           })
+
+        numPadOne.on('down', () => {
+          if (this.#playerOne && BobberScene.teleportCheat) {
+            this.teleportDestination = [this.#playerOne.x, this.#playerOne.y]
+          }
+        })
+
+        numPadTwo.on('down', () => {
+          if (this.#playerOne && this.teleportDestination && BobberScene.teleportCheat) {
+            this.#playerOne
+              .setPosition(...this.teleportDestination)
+              .setVelocity(0, 0)
+              .setAcceleration(0, 0)
+          }
+        })
       } catch (e: any) {
         toastMessage(e.message)
       }
@@ -437,8 +475,6 @@ export class BobberScene extends Scene {
       )
       this.#playerOne?.setVelocity(0, 0)
     }
-
-
 
     // Don't waste time calculating super small velocity endlessly for drag
     if (

@@ -56,6 +56,7 @@ window.addEventListener('resize', resizeCanvas)
 resizeCanvas()
 
 let teleportCheat = false
+BobberScene.teleportCheat = teleportCheat
 
 const HAS_LOCAL_STORAGE = isLocalStorageAvailable()
 const toggleStanDebug = () => {
@@ -63,7 +64,8 @@ const toggleStanDebug = () => {
 }
 const toggleTeleportCheat = () => {
   teleportCheat = !teleportCheat
-  console.log(teleportCheat, 'tele')
+  console.log(teleportCheat)
+  BobberScene.teleportCheat = teleportCheat
 }
 
 // apply local settings from local storage
@@ -75,6 +77,8 @@ if (HAS_LOCAL_STORAGE) {
     toggleTeleportCheat()
   }
 }
+
+
 
 const WIDTH = 256
 const HEIGHT = 240
@@ -163,7 +167,11 @@ class MenuScene extends Scene implements IMenuScene {
     },
     {
       id: 'teleport',
-      text: 'Teleport Keys = FALSE',
+      text: `Teleport Cheat = ${
+        localStorage.getItem('teleport-cheat') === 'TRUE'
+          ? 'TRUE'
+          : 'FALSE'
+      }`,
       action: () => {
         const item = this.settingsMenu.get('teleport')
         if (HAS_LOCAL_STORAGE) {
