@@ -23,6 +23,37 @@ function isLocalStorageAvailable() {
   }
 }
 
+function resizeCanvas() {
+  const aspectRatio = 16 / 15
+  const viewportWidth = window.innerWidth
+  const viewportHeight = window.innerHeight
+
+  // The width that is in aspect ratio to the viewPortHeight
+  let maxCanvasWidth = viewportHeight * aspectRatio
+
+  // Ensure the canvas height does not exceed the viewport height
+
+
+  const canvasElement = document.getElementById('game')
+  if (canvasElement) {
+    console.log({viewportWidth, viewportHeight, maxCanvasWidth})
+    // Have to remove the property to check the vanilla relationship
+    canvasElement.style.removeProperty('max-width')
+    if (canvasElement.clientWidth > maxCanvasWidth && canvasElement.clientHeight > viewportHeight) {
+      console.log('forcing canvas width to ', maxCanvasWidth)
+      // force canvas width to conform to aspect ratio
+      canvasElement.style.maxWidth = `${maxCanvasWidth}px`
+      
+    } 
+  }
+}
+
+// Resize the canvas when the window is resized
+window.addEventListener('resize', resizeCanvas)
+
+// Initial resize
+resizeCanvas()
+
 const HAS_LOCAL_STORAGE = isLocalStorageAvailable()
 const toggleStanDebug = () => {
   document.getElementById('info')?.classList.toggle('displayNone')
@@ -124,8 +155,8 @@ class MenuScene extends Scene implements IMenuScene {
       text: 'Back',
       action: () => {
         this.toggleToMenu(this.mainMenu)
-      }
-    }
+      },
+    },
   ]
   activeMenu: IMenuScene['activeMenu'] = new Map()
   mainMenu: IMenuScene['mainMenu'] = new Map()

@@ -59,14 +59,17 @@ body {
 }
 
 #game-wrapper {
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 #game {
+  
   width: 100%;
   height: auto;
+  /* max-height: 100vh; */
   box-sizing: content-box;
   aspect-ratio: 16/15;
 }
