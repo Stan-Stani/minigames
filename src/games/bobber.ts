@@ -422,7 +422,23 @@ export class BobberScene extends Scene {
       this.#playerOne?.body?.acceleration
     )
     stickyMessage('brakingInfo:', this.#playerOne?.brakingInfo)
-    if (!this.#playerOne) return
+    if (!this.#playerOne || !this.#spawnPlayer) return
+
+    const nullIfOutsideLevel = this.#water?.getTileAtWorldXY(
+      this.#playerOne.body.x + this.#playerOne.body.width / 2,
+      this.#playerOne.body.y + this.#playerOne.body.height / 2,
+      true
+    )
+
+    if (nullIfOutsideLevel === null) {
+      this.#playerOne?.setPosition(
+        this.#spawnPlayer[0].x,
+        this.#spawnPlayer[0].y - 50
+      )
+      this.#playerOne?.setVelocity(0, 0)
+    }
+
+
 
     // Don't waste time calculating super small velocity endlessly for drag
     if (
