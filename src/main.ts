@@ -33,18 +33,19 @@ function resizeCanvas() {
 
   // Ensure the canvas height does not exceed the viewport height
 
-
   const canvasElement = document.getElementById('game')
   if (canvasElement) {
-    console.log({viewportWidth, viewportHeight, maxCanvasWidth})
+    console.log({ viewportWidth, viewportHeight, maxCanvasWidth })
     // Have to remove the property to check the vanilla relationship
     canvasElement.style.removeProperty('max-width')
-    if (canvasElement.clientWidth > maxCanvasWidth && canvasElement.clientHeight > viewportHeight) {
+    if (
+      canvasElement.clientWidth > maxCanvasWidth &&
+      canvasElement.clientHeight > viewportHeight
+    ) {
       console.log('forcing canvas width to ', maxCanvasWidth)
       // force canvas width to conform to aspect ratio
       canvasElement.style.maxWidth = `${maxCanvasWidth}px`
-      
-    } 
+    }
   }
 }
 
@@ -54,15 +55,24 @@ window.addEventListener('resize', resizeCanvas)
 // Initial resize
 resizeCanvas()
 
+let teleportCheat = false
+
 const HAS_LOCAL_STORAGE = isLocalStorageAvailable()
 const toggleStanDebug = () => {
   document.getElementById('info')?.classList.toggle('displayNone')
+}
+const toggleTeleportCheat = () => {
+  teleportCheat = !teleportCheat
+  console.log(teleportCheat, 'tele')
 }
 
 // apply local settings from local storage
 if (HAS_LOCAL_STORAGE) {
   if (localStorage.getItem('show-stan-debug-stats') === 'TRUE') {
     toggleStanDebug()
+  }
+  if (localStorage.getItem('teleport-cheat') === 'TRUE') {
+    toggleTeleportCheat()
   }
 }
 
@@ -146,6 +156,31 @@ class MenuScene extends Scene implements IMenuScene {
               localStorage.setItem('show-stan-debug-stats', 'FALSE')
               item.text = item.text.replace('TRUE', 'FALSE')
               document.getElementById('info')?.classList.toggle('displayNone')
+            }
+          }
+        }
+      },
+    },
+    {
+      id: 'teleport',
+      text: 'Teleport Keys = FALSE',
+      action: () => {
+        const item = this.settingsMenu.get('teleport')
+        if (HAS_LOCAL_STORAGE) {
+          const teleportCheatStorageString =
+            localStorage.getItem('teleport-cheat')
+          if (item) {
+            if (
+              teleportCheatStorageString === 'FALSE' ||
+              !teleportCheatStorageString
+            ) {
+              localStorage.setItem('teleport-cheat', 'TRUE')
+              item.text = item.text.replace('FALSE', 'TRUE')
+              toggleTeleportCheat()
+            } else {
+              localStorage.setItem('teleport-cheat', 'FALSE')
+              item.text = item.text.replace('TRUE', 'FALSE')
+              toggleTeleportCheat()
             }
           }
         }
