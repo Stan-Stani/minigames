@@ -34,8 +34,8 @@ export class BobberScene extends Scene {
   constructor() {
     super('BobberScene')
   }
-  static teleportCheat = false
-  
+  static teleportCheat: [boolean, number, number]  = [false, 0, 0]
+  static HAS_LOCAL_STORAGE = false
 
   #textbox?: GameObjects.Text
   #playerOne?: IPlayer
@@ -50,7 +50,7 @@ export class BobberScene extends Scene {
 
   isRunning = false
   isOnGround = false
-  teleportDestination?: [number, number]
+  teleportDestination = BobberScene.teleportCheat?.slice(1) as [number, number]
 
   /** Attempts to set the acceleration of the player in the given direction */
   setHorizontalAcceleration(direction: 'left' | 'right') {
@@ -170,7 +170,7 @@ export class BobberScene extends Scene {
         right: false,
         space: false,
         numPadOne: false,
-        numPadOne: false,
+        numPadTwo: false,
       }
       this.#playerOne.setDamping(true)
       this.#playerOne.isImmersed = false
@@ -339,13 +339,24 @@ export class BobberScene extends Scene {
           })
 
         numPadOne.on('down', () => {
-          if (this.#playerOne && BobberScene.teleportCheat) {
-            this.teleportDestination = [this.#playerOne.x, this.#playerOne.y]
+          if (this.#playerOne && BobberScene.teleportCheat[0]) {
+            const dest: [number, number] = [
+              this.#playerOne.x,
+              this.#playerOne.y,
+            ]
+            if (BobberScene.HAS_LOCAL_STORAGE) {
+              localStorage.setItem('teleport-cheat', JSON.stringify(dest))
+            }
+            this.teleportDestination = dest
           }
         })
 
         numPadTwo.on('down', () => {
-          if (this.#playerOne && this.teleportDestination && BobberScene.teleportCheat) {
+          if (
+            this.#playerOne &&
+            this.teleportDestination &&
+            BobberScene.teleportCheat[0]
+          ) {
             this.#playerOne
               .setPosition(...this.teleportDestination)
               .setVelocity(0, 0)
