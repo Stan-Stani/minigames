@@ -28,13 +28,15 @@ interface IPlayer extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
   }
   isImmersed: boolean
   isDoneBobbing: boolean
+  respawn?: (coordArr?: [number, number]) => void
+  respawnedPreviousFrame?: boolean
 }
 
 export class BobberScene extends Scene {
   constructor() {
     super('BobberScene')
   }
-  static teleportCheat: [boolean, number, number]  = [false, 0, 0]
+  static teleportCheat: [boolean, number, number] = [false, 0, 0]
   static HAS_LOCAL_STORAGE = false
 
   #textbox?: GameObjects.Text
@@ -46,7 +48,7 @@ export class BobberScene extends Scene {
   #platforms?: Phaser.Tilemaps.TilemapLayer
   #water?: Phaser.Tilemaps.TilemapLayer
   #kill?: Phaser.Tilemaps.TilemapLayer
-  #spawnPlayer?: spawnLocation[]
+  initialSpawn?: spawnLocation[]
 
   isRunning = false
   isOnGround = false
@@ -145,12 +147,12 @@ export class BobberScene extends Scene {
     const map = this.make.tilemap({ key: 'tilemapLevel1' })
     const tileset = map.addTilesetImage('tiles', 'tiles')
     if (tileset) {
-      this.#spawnPlayer = map.createFromObjects('Spawn', {
+      this.initialSpawn = map.createFromObjects('Spawn', {
         name: 'playerSpawn',
       })
       this.#playerOne = this.physics.add.sprite(
-        this.#spawnPlayer[0].x,
-        this.#spawnPlayer[0].y - 50,
+        this.initialSpawn[0].x,
+        this.initialSpawn[0].y - 50,
         'player'
       ) as IPlayer
       this.#playerOne.body
@@ -177,8 +179,20 @@ export class BobberScene extends Scene {
       this.#playerOne.isDoneBobbing = false
       this.#playerOne.setDepth(1)
       this.cameras.main.startFollow(this.#playerOne, true)
+      this.#playerOne.respawn = (dest = this.teleportDestination) => {
+        if (!this.#playerOne) return
+        this.#playerOne
+          .setPosition(...dest)
+          .setVelocity(0, 0)
+          .setAcceleration(0, 0)
+        this.#playerOne.isImmersed = false
+        this.#playerOne.setGravityY(0)
+        this.#playerOne.isDoneBobbing = false
+        this.#playerOne.respawnedPreviousFrame = true
+      }
+      this.#playerOne.respawnedPreviousFrame = false
 
-      if (!this.#spawnPlayer) throw new Error()
+      if (!this.initialSpawn) throw new Error()
       this.#water = map.createLayer('water', tileset)!
       this.#water!.setCollisionByExclusion([-1], true)
       this.#platforms = map.createLayer('platforms', tileset)!
@@ -188,13 +202,13 @@ export class BobberScene extends Scene {
 
       this.physics.add.collider(this.#playerOne, this.#kill, () => {
         this.#playerOne?.setPosition(
-          this.#spawnPlayer[0].x,
-          this.#spawnPlayer[0].y - 50
+          this.initialSpawn[0].x,
+          this.initialSpawn[0].y - 50
         )
         this.#playerOne?.setVelocity(0, 0)
       })
     }
-    if (!this.#spawnPlayer) throw new Error()
+    if (!this.initialSpawn) throw new Error()
     this.textures.generate('ground', {
       data: ['1'],
       pixelWidth: WIDTH,
@@ -355,12 +369,10 @@ export class BobberScene extends Scene {
           if (
             this.#playerOne &&
             this.teleportDestination &&
-            BobberScene.teleportCheat[0]
+            BobberScene.teleportCheat[0] &&
+            this.#playerOne.respawn
           ) {
-            this.#playerOne
-              .setPosition(...this.teleportDestination)
-              .setVelocity(0, 0)
-              .setAcceleration(0, 0)
+            this.#playerOne.respawn()
           }
         })
       } catch (e: any) {
@@ -471,7 +483,7 @@ export class BobberScene extends Scene {
       this.#playerOne?.body?.acceleration
     )
     stickyMessage('brakingInfo:', this.#playerOne?.brakingInfo)
-    if (!this.#playerOne || !this.#spawnPlayer) return
+    if (!this.#playerOne || !this.initialSpawn) return
 
     const nullIfOutsideLevel = this.#water?.getTileAtWorldXY(
       this.#playerOne.body.x + this.#playerOne.body.width / 2,
@@ -481,8 +493,8 @@ export class BobberScene extends Scene {
 
     if (nullIfOutsideLevel === null) {
       this.#playerOne?.setPosition(
-        this.#spawnPlayer[0].x,
-        this.#spawnPlayer[0].y - 50
+        this.initialSpawn[0].x,
+        this.initialSpawn[0].y - 50
       )
       this.#playerOne?.setVelocity(0, 0)
     }
@@ -568,8 +580,9 @@ export class BobberScene extends Scene {
       if (
         this.#playerOne.body.velocity.y < 10 &&
         this.#playerOne.isImmersed &&
-        this.#playerOne.isImmersed !== wasImmersedPreviousFrame
+        this.#playerOne.isImmersed !== wasImmersedPreviousFrame && !this.#playerOne.respawnedPreviousFrame
       ) {
+        this.#playerOne.respawnedPreviousFrame = false
         this.#playerOne.setGravityY(-GRAVITY)
         this.#playerOne.body.setVelocityY(0)
         this.#playerOne.isDoneBobbing = true
