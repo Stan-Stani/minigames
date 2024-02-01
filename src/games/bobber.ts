@@ -359,7 +359,7 @@ export class BobberScene extends Scene {
               this.#playerOne.y,
             ]
             if (BobberScene.HAS_LOCAL_STORAGE) {
-              localStorage.setItem('teleport-cheat', JSON.stringify(dest))
+              localStorage.setItem('teleport-cheat', JSON.stringify([true, ...dest]))
             }
             this.teleportDestination = dest
           }

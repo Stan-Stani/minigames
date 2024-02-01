@@ -55,17 +55,27 @@ window.addEventListener('resize', resizeCanvas)
 // Initial resize
 resizeCanvas()
 
-BobberScene.teleportCheat = [false, 0, 0]
+// BobberScene.teleportCheat = [true, 0, 0]
 
 const HAS_LOCAL_STORAGE = isLocalStorageAvailable()
 const toggleStanDebug = () => {
   document.getElementById('info')?.classList.toggle('displayNone')
 }
 const toggleTeleportCheat = (coordinateArray?: [number, number] | null) => {
+  console.log(typeof coordinateArray)
   BobberScene.teleportCheat[0] = !BobberScene.teleportCheat[0]
   if (coordinateArray) {
-    BobberScene.teleportCheat = [BobberScene.teleportCheat[0], ...coordinateArray]
+    BobberScene.teleportCheat = [
+      BobberScene.teleportCheat[0],
+      ...coordinateArray,
+    ]
+  } else {
+    BobberScene.teleportCheat = [
+      !BobberScene.teleportCheat[0],
+      ...(BobberScene.teleportCheat.slice(1) as [number, number]),
+    ]
   }
+  console.log(BobberScene.teleportCheat)
   BobberScene.HAS_LOCAL_STORAGE = HAS_LOCAL_STORAGE
 }
 
@@ -81,7 +91,8 @@ if (HAS_LOCAL_STORAGE) {
     initialTeleportCheatLocationString === null
       ? null
       : JSON.parse(initialTeleportCheatLocationString)
-  toggleTeleportCheat(initialTeleportCheatLocation)
+  if (initialTeleportCheatLocation)
+    BobberScene.teleportCheat = initialTeleportCheatLocation
 }
 
 const WIDTH = 256
@@ -172,8 +183,9 @@ class MenuScene extends Scene implements IMenuScene {
     {
       id: 'teleport',
       text: `Teleport Cheat = ${
-        localStorage.getItem('teleport-cheat') !== null &&
-        localStorage.getItem('teleport-cheat') !== ''
+        JSON.parse(
+          localStorage.getItem('teleport-cheat') ?? '[false, 0, 0]'
+        )[0] !== false
           ? 'TRUE'
           : 'FALSE'
       }`,
@@ -183,17 +195,28 @@ class MenuScene extends Scene implements IMenuScene {
           const teleportCheatStorageString =
             localStorage.getItem('teleport-cheat')
           if (item) {
-            if (
-              !teleportCheatStorageString
-            ) {
-              const initalTeleportCheat = [false, 0, 0]
-              localStorage.setItem('teleport-cheat', JSON.stringify(initalTeleportCheat))
+            if (!teleportCheatStorageString) {
+              const initalEnablingOfTeleportCheat = [true, 0, 0]
+              localStorage.setItem(
+                'teleport-cheat',
+                JSON.stringify(initalEnablingOfTeleportCheat)
+              )
               item.text = item.text.replace('FALSE', 'TRUE')
-              toggleTeleportCheat(initalTeleportCheat.slice(1) as [number, number])
+              toggleTeleportCheat(
+                initalEnablingOfTeleportCheat.slice(1) as [number, number]
+              )
             } else {
-              localStorage.setItem('teleport-cheat', 'FALSE')
-              item.text = item.text.replace('TRUE', 'FALSE')
-              toggleTeleportCheat()
+              let teleportCheatTuple = JSON.parse(teleportCheatStorageString)
+              teleportCheatTuple[0] = !teleportCheatTuple[0]
+              localStorage.setItem(
+                'teleport-cheat',
+                JSON.stringify(teleportCheatTuple)
+              )
+              teleportCheatTuple[0] === true
+                ? (item.text = item.text.replace('FALSE', 'TRUE'))
+                : (item.text = item.text.replace('TRUE', 'FALSE'))
+              console.log({ teleportCheatTuple })
+              toggleTeleportCheat(teleportCheatTuple.slice(1))
             }
           }
         }
