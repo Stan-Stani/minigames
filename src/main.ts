@@ -23,8 +23,17 @@ function isLocalStorageAvailable() {
   }
 }
 
-function resizeCanvas() {
-  const aspectRatio = 16 / 15
+/** Ensures the canvas height does not exceed the viewport height.
+ *  Runs once initially and then anytime window is resized. */
+function maintainAspectRatio(
+  element: HTMLElement | null,
+  aspectRatio: number,
+  initialRun = true
+) {
+  if (!element) {
+    throw new Error('element argument is falsy!')
+  }
+
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight
 
@@ -33,27 +42,27 @@ function resizeCanvas() {
 
   // Ensure the canvas height does not exceed the viewport height
 
-  const canvasElement = document.getElementById('game')
-  if (canvasElement) {
-    console.log({ viewportWidth, viewportHeight, maxCanvasWidth })
+  if (element) {
     // Have to remove the property to check the vanilla relationship
-    canvasElement.style.removeProperty('max-width')
+    element.style.removeProperty('max-width')
     if (
-      canvasElement.clientWidth > maxCanvasWidth &&
-      canvasElement.clientHeight > viewportHeight
+      element.clientWidth > maxCanvasWidth &&
+      element.clientHeight > viewportHeight
     ) {
-      console.log('forcing canvas width to ', maxCanvasWidth)
       // force canvas width to conform to aspect ratio
-      canvasElement.style.maxWidth = `${maxCanvasWidth}px`
+      element.style.maxWidth = `${maxCanvasWidth}px`
     }
+  }
+
+  if (initialRun) {
+    // Resize the canvas when the window is resized
+    window.addEventListener('resize', () =>
+      maintainAspectRatio(element, aspectRatio, false)
+    )
   }
 }
 
-// Resize the canvas when the window is resized
-window.addEventListener('resize', resizeCanvas)
-
-// Initial resize
-resizeCanvas()
+maintainAspectRatio(document.getElementById('game'), 16 / 15)
 
 // BobberScene.teleportCheat = [true, 0, 0]
 
