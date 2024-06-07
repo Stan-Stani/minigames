@@ -2,6 +2,9 @@ import './style.css'
 import { Game, Scene, WEBGL } from 'phaser'
 import { PlatformerTestScene } from './games/platformerTest'
 import { BobberScene } from './games/bobber'
+//@ts-ignore
+import {DefaultPluginsConfig}  from '../node_modules/phaser-plugin-inspector/dist/phaser-plugin-inspector.esm.js' 
+
 interface IMenuItemSeed {
   id?: string
   text: string
@@ -332,6 +335,7 @@ const config: Phaser.Types.Core.GameConfig = {
     width: WIDTH,
     height: HEIGHT,
   },
+  plugins: DefaultPluginsConfig
 }
 
 new Game(config)
