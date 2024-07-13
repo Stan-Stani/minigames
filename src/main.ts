@@ -192,7 +192,7 @@ class MenuScene extends Scene implements IMenuScene {
     },
     {
       id: 'teleport',
-      text: `Teleport Cheat = ${
+      text: `Teleport Cheat:\n numpad1 and numpad2\n = ${
         JSON.parse(
           localStorage.getItem('teleport-cheat') ?? '[false, 0, 0]'
         )[0] !== false
@@ -250,13 +250,14 @@ class MenuScene extends Scene implements IMenuScene {
   setUpMenu(menuItems: IMenuItemSeed[], isActive: boolean) {
     const builtMenu: IBuiltMenu = new Map()
     menuItems.forEach((menuItem, index) => {
+      const yCoord = (function putLastItemAtBottom() {
+        return menuItems.length - 1 !== index
+          ? HEIGHT / 10 + LINE_HEIGHT * index
+          : HEIGHT - LINE_HEIGHT
+      })()
+
       let text = this.add
-        .text(
-          WIDTH / 10,
-          HEIGHT / 10 + LINE_HEIGHT * index,
-          menuItem.text,
-          FONT_OPTIONS
-        )
+        .text(WIDTH / 10, yCoord, menuItem.text, FONT_OPTIONS)
         // .setOrigin(0.5, 1)
         .setInteractive()
         .on('pointerover', () => {
@@ -332,7 +333,7 @@ const config: Phaser.Types.Core.GameConfig = {
     parent: 'game-wrapper',
     width: WIDTH,
     height: HEIGHT,
-  }
+  },
 }
 
 new Game(config)
