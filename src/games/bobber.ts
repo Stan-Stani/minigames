@@ -146,6 +146,11 @@ export class BobberScene extends Scene {
       textureURL: './bobber/entities/buoy.png',
       atlasURL: './bobber/entities/buoy.json',
     })
+    this.load.aseprite({
+      key: 'buoyActivate',
+      textureURL: './bobber/entities/buoyActivate.png',
+      atlasURL: './bobber/entities/buoyActivate.json',
+    })
 
     this.load.image('tiles', './bobber/tiles.png')
     this.load.tilemapTiledJSON('tilemapLevel1', './bobber/level1.json')
@@ -206,14 +211,24 @@ export class BobberScene extends Scene {
       this.#playerOne.respawnedPreviousFrame = false
 
       if (!this.initialSpawn) throw new Error()
-      this.anims.createFromAseprite('buoy')
+      
       const thing = this.physics.add.sprite(
         this.initialSpawn[0].x + 80,
         this.initialSpawn[0].y - 50,
         'buoy'
       )
+      this.anims.createFromAseprite('buoy', undefined, thing)
+      
+      const thing2 = this.physics.add.sprite(
+        this.initialSpawn[0].x + 205,
+        this.initialSpawn[0].y - 50,
+        'buoyActivate'
+      )
+      this.anims.createFromAseprite('buoyActivate', undefined, thing2)
       thing.body.setBounce(0.3)
       thing.play({ key: 'default', repeat: -1 })
+      thing2.body.setBounce(0.3)
+      thing2.play({ key: 'default', repeat: -1 })
 
       this.#water = map.createLayer('water', tileset)!
       this.#water!.setCollisionByExclusion([-1], true)
@@ -222,6 +237,7 @@ export class BobberScene extends Scene {
       this.#kill = map.createLayer('kill', tileset)
 
       this.physics.add.collider(thing, this.#platforms)
+      this.physics.add.collider(thing2, this.#platforms)
 
       if (!this.#kill) {
         throw new Error(`kill is ${this.#kill} but cannot be falsy`)
