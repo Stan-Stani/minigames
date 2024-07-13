@@ -10,11 +10,9 @@
   },
   "dependencies": {
     "phaser": "^3.70.0",
-    "prettier": "^3.0.3",
-    "tweakpane": "^3.0.0"
+    "prettier": "^3.0.3"
   },
   "devDependencies": {
-    "phaser-plugin-inspector": "^2.0.1",
     "typescript": "^5.0.2",
     "vite": "^4.4.5"
   },

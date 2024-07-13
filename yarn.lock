@@ -155,11 +155,6 @@ nanoid@^3.3.6:
   resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.6.tgz#443380c856d6e9f9824267d960b4236ad583ea4c"
   integrity sha512-BGcqMMJuToF7i1rt+2PWSNVnWIkGCU78jBG3RxO/bZlnZPK2Cmi2QaffxGO/2RvWi9sL+FAiRiXMgsyxQ1DIDA==
 
-phaser-plugin-inspector@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/phaser-plugin-inspector/-/phaser-plugin-inspector-2.0.1.tgz#7fd5360fbdc4f4698840f8962cc53d2b8d4f970e"
-  integrity sha512-V7jQ0jKSoRT2NFiXn58OTm4vO9fLj0tpVzFA4Lm/bvC78rF+PRiUdmEmiCcwJ2Q3iYq/V3NdH5ITgluYytoaOg==
-
 phaser@^3.70.0:
   version "3.70.0"
   resolved "https://registry.yarnpkg.com/phaser/-/phaser-3.70.0.tgz#8d187308375171d268d5c509ecdd796aac164ab9"
@@ -197,11 +192,6 @@ source-map-js@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/source-map-js/-/source-map-js-1.0.2.tgz#adbc361d9c62df380125e7f161f71c826f1e490c"
   integrity sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==
-
-tweakpane@^3.0.0:
-  version "3.1.10"
-  resolved "https://registry.yarnpkg.com/tweakpane/-/tweakpane-3.1.10.tgz#d2e11a3ee668017f7572ce53417f06eed41f5ab8"
-  integrity sha512-rqwnl/pUa7+inhI2E9ayGTqqP0EPOOn/wVvSWjZsRbZUItzNShny7pzwL3hVlaN4m9t/aZhsP0aFQ9U5VVR2VQ==
 
 typescript@^5.0.2:
   version "5.2.2"

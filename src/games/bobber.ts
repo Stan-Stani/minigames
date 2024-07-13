@@ -7,9 +7,8 @@ import {
 const WIDTH = 256
 const HEIGHT = 240
 const GRAVITY = 128
-// @ts-ignore
-import { AddArcadeBody } from '../../node_modules/phaser-plugin-inspector/dist/phaser-plugin-inspector.esm.js'
-import { Pane } from 'tweakpane'
+
+
 
 interface spawnLocation extends GameObjects.GameObject {
   x: number
@@ -157,7 +156,6 @@ export class BobberScene extends Scene {
   }
 
   create() {
-    const pane = this.inspectorScene.pane
     this.physics.world.setBounds(0, 0, WIDTH * 11, HEIGHT)
     this.cameras.main.setBounds(0, 0, 1024 * 4, HEIGHT)
 
@@ -462,7 +460,6 @@ export class BobberScene extends Scene {
 
     const playerBody = this.#playerOne.body as Phaser.Physics.Arcade.Body
 
-    AddArcadeBody(playerBody, pane)
 
     playerBody.onCollide = true
     if (this.#platforms) {
