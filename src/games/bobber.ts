@@ -32,6 +32,7 @@ export interface IPlayer
   isDoneBobbing: boolean
   respawn?: (coordArr?: [number, number]) => void
   respawnedPreviousFrame?: boolean
+  respawnDestination?: [number, number]
 }
 
 export class BobberScene extends Scene {
@@ -55,6 +56,59 @@ export class BobberScene extends Scene {
   isRunning = false
   isOnGround = false
   teleportDestination = BobberScene.teleportCheat?.slice(1) as [number, number]
+
+  makeBuoyComposite(x: number, y: number) {
+    if (!this.#platforms) {
+      throw new Error('#Platforms is falsy')
+    }
+    if (!this.playerOne) {
+      throw new Error('playerOne is falsy')
+    }
+    const buoy = this.physics.add.sprite(x, y, 'buoy')
+    buoy.setImmovable(true)
+
+    buoy.body.setAllowGravity(false)
+    buoy.setDepth(-2)
+    const buoy1RelativeOrigin = [0.5 * buoy.width, 0.85 * buoy.height]
+    buoy.setDisplayOrigin(...buoy1RelativeOrigin)
+    this.anims.createFromAseprite('buoy', undefined, buoy)
+
+    const buoy1AbsoluteMiddleX = buoy.x
+    const buoy1AbsoluteTopY = buoy.y - buoy1RelativeOrigin[1]
+    const buoy1LightAbsoluteMiddleX = buoy1AbsoluteMiddleX - 2
+    const buoy1LightAbsoluteMiddleY = buoy1AbsoluteTopY + 1
+    const activationParticles = this.add.sprite(
+      buoy1LightAbsoluteMiddleX,
+      buoy1LightAbsoluteMiddleY,
+      'buoyActivate'
+    )
+    activationParticles.setVisible(false)
+
+    this.anims.createFromAseprite(
+      'buoyActivate',
+      undefined,
+      activationParticles
+    )
+
+    this.physics.add.collider(buoy, this.#platforms)
+
+    const overlap = this.physics.add.overlap(buoy, this.playerOne, () => {
+      if (!this.playerOne) {
+        return
+      }
+      buoy.play({ key: 'default', repeat: -1, startFrame: 1 })
+
+      activationParticles.play({
+        key: 'default',
+        hideOnComplete: true,
+        showOnStart: true,
+      })
+
+      this.playerOne.respawnDestination = [x, y]
+
+      overlap.destroy()
+    })
+  }
 
   /** Attempts to set the acceleration of the player in the given direction */
   setHorizontalAcceleration(direction: 'left' | 'right') {
@@ -175,15 +229,12 @@ export class BobberScene extends Scene {
     console.log('hellod')
     console.log('hellod')
     console.log('hellod')
-    const checkpoint = spawnLayer.objects.find(
+    const checkpoints = spawnLayer.objects.filter(
       (obj): obj is spawnLocation =>
         obj.type === 'checkpoint' &&
         typeof obj.x === 'number' &&
         typeof obj.y === 'number'
     )
-    if (!checkpoint) {
-      throw new Error('checkpoint is not defined')
-    }
 
     if (playerSpawn && tileset) {
       this.initialSpawn = playerSpawn
@@ -232,33 +283,15 @@ export class BobberScene extends Scene {
 
       if (!this.initialSpawn) throw new Error()
 
-      const buoy1 = this.add.sprite(checkpoint.x, checkpoint.y, 'buoy')
-      const buoy1RelativeOrigin = [0.5 * buoy1.width, 0.85 * buoy1.height]
-      buoy1.setDisplayOrigin(...buoy1RelativeOrigin)
-      this.anims.createFromAseprite('buoy', undefined, buoy1)
-
-      const buoy1AbsoluteMiddleX = buoy1.x
-      const buoy1AbsoluteTopY = buoy1.y - buoy1RelativeOrigin[1]
-      const buoy1LightAbsoluteMiddleX = buoy1AbsoluteMiddleX - 2
-      const buoy1LightAbsoluteMiddleY = buoy1AbsoluteTopY + 1
-      const activate1 = this.add.sprite(
-        buoy1LightAbsoluteMiddleX,
-        buoy1LightAbsoluteMiddleY,
-        'buoyActivate'
-      )
-
-      this.anims.createFromAseprite('buoyActivate', undefined, activate1)
-
-      buoy1.play({ key: 'default', repeat: -1 })
-      activate1.play({ key: 'default', repeat: -1 })
-
       this.#water = map.createLayer('water', tileset)!
       this.#water!.setCollisionByExclusion([-1], true)
       this.#platforms = map.createLayer('platforms', tileset)!
       this.#platforms!.setCollisionByExclusion([-1], true)
       this.#kill = map.createLayer('kill', tileset)
 
-      this.physics.add.collider(buoy1, this.#platforms)
+      checkpoints.forEach((cp) => {
+        this.makeBuoyComposite(cp.x, cp.y)
+      })
 
       if (!this.#kill) {
         throw new Error(`kill is ${this.#kill} but cannot be falsy`)
@@ -267,9 +300,14 @@ export class BobberScene extends Scene {
       this.#kill.setCollisionByExclusion([-1], true)
 
       this.physics.add.collider(this.playerOne, this.#kill, () => {
-        this.playerOne?.setPosition(
-          this.initialSpawn?.x,
-          this.initialSpawn?.y ?? 0 - 50
+        if (!this.playerOne?.respawn) {
+          return
+        }
+        this.playerOne?.respawn(
+          this.playerOne?.respawnDestination || [
+            this.initialSpawn?.x ?? 0,
+            this.initialSpawn?.y ?? 0 - 50,
+          ]
         )
         this.playerOne?.setVelocity(0, 0)
       })

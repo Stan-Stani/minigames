@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="170" height="15" tilewidth="16" tileheight="16" infinite="0" backgroundcolor="#f9e3d7" nextlayerid="7" nextobjectid="19">
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="170" height="15" tilewidth="16" tileheight="16" infinite="0" backgroundcolor="#f9e3d7" nextlayerid="7" nextobjectid="23">
  <editorsettings>
   <export target="level1.json" format="json"/>
  </editorsettings>
@@ -64,11 +64,23 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,49,49,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,49,0,49,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,49,49,49,49,49,49,0,0,49,0,0,49,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,0,0,0,0,0,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,49,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <objectgroup id="4" name="Spawn" visible="0" opacity="0.39">
-  <object id="14" name="playerSpawn" x="9.5" y="152.5" visible="0">
+ <objectgroup id="4" name="Spawn" opacity="0.39">
+  <object id="14" name="playerSpawn" x="9.5" y="152.5">
    <point/>
   </object>
-  <object id="18" name="1" type="checkpoint" x="816" y="128" visible="0">
+  <object id="18" name="1" type="checkpoint" x="816" y="128">
+   <point/>
+  </object>
+  <object id="19" name="2" type="checkpoint" x="1368" y="128">
+   <point/>
+  </object>
+  <object id="20" name="3" type="checkpoint" x="1720" y="112">
+   <point/>
+  </object>
+  <object id="21" name="4" type="checkpoint" x="1904" y="192">
+   <point/>
+  </object>
+  <object id="22" name="5" type="checkpoint" x="2432" y="128">
    <point/>
   </object>
  </objectgroup>
