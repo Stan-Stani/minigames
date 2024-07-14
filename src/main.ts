@@ -1,7 +1,7 @@
 import './style.css'
 import { Game, Scene, WEBGL } from 'phaser'
 import { PlatformerTestScene } from './games/platformerTest'
-import { BobberScene } from './games/bobber'
+import { BobberScene, IPlayer } from './games/bobber'
 
 interface IMenuItemSeed {
   id?: string
@@ -336,4 +336,62 @@ const config: Phaser.Types.Core.GameConfig = {
   },
 }
 
-new Game(config)
+const game = new Game(config)
+
+// Thanks Claude 3.5 Sonnet!
+if (import.meta.hot) {
+  console.log('HMR is enabled')
+
+  // https://vitejs.dev/guide/api-hmr#hot-accept-deps-cb
+  // for (const path in sceneModules) {
+  import.meta.hot.accept(['./games/bobber.ts'], (newModules) => {
+    console.log(newModules[0])
+    const newModule = newModules[0]
+    console.log(`Accepting update for module: ./games/bobber.ts'`)
+    try {
+      console.log('New module loaded:', newModule)
+      const sceneName = newModule.default.name
+      const newScene: BobberScene = new newModule.default()
+      console.log(newScene)
+      if (newScene instanceof Phaser.Scene) {
+        console.log(`Hot-reloading scene: ${sceneName}`)
+        console.log(game.scene.getScene(sceneName))
+        const oldScene = game.scene.getScene<BobberScene>(sceneName)
+       
+        let isActive = false
+        let oldPlayerOne: IPlayer | undefined
+        if (game.scene.isActive(sceneName)) {
+          isActive = true
+          oldPlayerOne = oldScene.playerOne
+        }
+        if (game.scene.getScene(sceneName)) {
+          console.log(`Removing existing scene: ${sceneName}`)
+          game.scene.remove(sceneName)
+        }
+
+        console.log(`Adding new scene: ${sceneName}`)
+        game.scene.add(sceneName, newScene, false)
+
+
+        if (isActive) {
+          console.log(`Restarting scene: ${sceneName}`)
+          console.log(oldPlayerOne.x)
+          
+          game.scene.start(sceneName)
+          newScene.playerOne.x = oldPlayerOne.x
+          newScene.playerOne.y = oldPlayerOne.y
+        }
+      } else {
+        console.log('Loaded module is not a Phaser Scene:', newModule)
+      }
+    } catch (error) {
+      console.error('Error during hot-reload:', error)
+    }
+  })
+  // }
+
+  import.meta.hot.dispose(() => {
+    console.log('HMR dispose called')
+    game.destroy(false)
+  })
+}

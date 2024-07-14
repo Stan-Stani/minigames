@@ -13,7 +13,8 @@ interface spawnLocation extends Phaser.Types.Tilemaps.TiledObject {
   y: number
 }
 
-interface IPlayer extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
+export interface IPlayer
+  extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
   brakingInfo: {
     isBraking: boolean
     // direction body was moving when braking started
@@ -42,7 +43,7 @@ export class BobberScene extends Scene {
 
   inspectorScene: any
   #textbox?: GameObjects.Text
-  #playerOne?: IPlayer
+  playerOne?: IPlayer
   // @ts-ignore
   #generatedPlatforms: (Phaser.GameObjects.Image & {
     body: Phaser.Physics.Arcade.StaticBody
@@ -51,14 +52,13 @@ export class BobberScene extends Scene {
   #water?: Phaser.Tilemaps.TilemapLayer
   #kill?: Phaser.Tilemaps.TilemapLayer | null
   initialSpawn?: spawnLocation
-
   isRunning = false
   isOnGround = false
   teleportDestination = BobberScene.teleportCheat?.slice(1) as [number, number]
 
   /** Attempts to set the acceleration of the player in the given direction */
   setHorizontalAcceleration(direction: 'left' | 'right') {
-    if (!this.#playerOne) return
+    if (!this.playerOne) return
     let baseAcceleration: number
     /** Returns true if player is accelerating in direction of
      * current velocity
@@ -67,31 +67,31 @@ export class BobberScene extends Scene {
     let directionBeforeBraking: 'left' | 'right'
     if (direction === 'left') {
       baseAcceleration = -30
-      conditionalResultToUse = (this.#playerOne?.body.velocity?.x ?? 0) <= 0
+      conditionalResultToUse = (this.playerOne?.body.velocity?.x ?? 0) <= 0
       directionBeforeBraking = 'right'
-      // this.#playerOne?.setFlipX(true)
+      // this.playerOne?.setFlipX(true)
     } else if (direction === 'right') {
       baseAcceleration = 30
-      conditionalResultToUse = (this.#playerOne?.body.velocity?.x ?? 0) >= 0
+      conditionalResultToUse = (this.playerOne?.body.velocity?.x ?? 0) >= 0
       directionBeforeBraking = 'left'
-      // this.#playerOne?.setFlipX(false)
+      // this.playerOne?.setFlipX(false)
     } else {
       return
     }
     if (conditionalResultToUse && this.isOnGround) {
-      this.#playerOne?.setAccelerationX(baseAcceleration)
+      this.playerOne?.setAccelerationX(baseAcceleration)
     } else if (this.isOnGround) {
       // else we are trying to slow down while sliding in the other direction
 
-      this.#playerOne.brakingInfo = {
+      this.playerOne.brakingInfo = {
         isBraking: true,
         directionBeforeBraking: directionBeforeBraking,
       }
-      this.#playerOne?.setAccelerationX(2 * baseAcceleration)
-    } else if (this.#playerOne.isImmersed) {
-      this.#playerOne.setAccelerationX(baseAcceleration * 2)
+      this.playerOne?.setAccelerationX(2 * baseAcceleration)
+    } else if (this.playerOne.isImmersed) {
+      this.playerOne.setAccelerationX(baseAcceleration * 2)
     } else if (!this.isOnGround) {
-      this.#playerOne.setAccelerationX(baseAcceleration / 2)
+      this.playerOne.setAccelerationX(baseAcceleration / 2)
     }
   }
 
@@ -171,7 +171,10 @@ export class BobberScene extends Scene {
         typeof obj.x === 'number' &&
         typeof obj.y === 'number'
     )
-
+    console.log('hellod')
+    console.log('hellod')
+    console.log('hellod')
+    console.log('hellod')
     const checkpoint = spawnLayer.objects.find(
       (obj): obj is spawnLocation =>
         obj.type === 'checkpoint' &&
@@ -184,24 +187,24 @@ export class BobberScene extends Scene {
 
     if (playerSpawn && tileset) {
       this.initialSpawn = playerSpawn
-      this.#playerOne = this.physics.add.sprite(
+      this.playerOne = this.physics.add.sprite(
         this.initialSpawn.x ?? 0,
         this.initialSpawn.y ?? 0 - 50,
         'player'
       ) as IPlayer
-      this.#playerOne.body
+      this.playerOne.body
         .setSize(10, 14)
-        .setOffset(this.#playerOne.body.offset.x, 3)
+        .setOffset(this.playerOne.body.offset.x, 3)
       const w = window as any
-      w.playerOne = this.#playerOne
+      w.playerOne = this.playerOne
 
-      this.#playerOne?.body.setBounce(0.3)
+      this.playerOne?.body.setBounce(0.3)
 
-      this.#playerOne.brakingInfo = {
+      this.playerOne.brakingInfo = {
         isBraking: false,
         directionBeforeBraking: undefined,
       }
-      this.#playerOne.keyInfo = {
+      this.playerOne.keyInfo = {
         left: false,
         right: false,
         down: false,
@@ -209,23 +212,23 @@ export class BobberScene extends Scene {
         numPadOne: false,
         numPadTwo: false,
       }
-      this.#playerOne.setDamping(true)
-      this.#playerOne.isImmersed = false
-      this.#playerOne.isDoneBobbing = false
-      this.#playerOne.setDepth(-1)
-      this.cameras.main.startFollow(this.#playerOne, true)
-      this.#playerOne.respawn = (dest = this.teleportDestination) => {
-        if (!this.#playerOne) return
-        this.#playerOne
+      this.playerOne.setDamping(true)
+      this.playerOne.isImmersed = false
+      this.playerOne.isDoneBobbing = false
+      this.playerOne.setDepth(-1)
+      this.cameras.main.startFollow(this.playerOne, true)
+      this.playerOne.respawn = (dest = this.teleportDestination) => {
+        if (!this.playerOne) return
+        this.playerOne
           .setPosition(...dest)
           .setVelocity(0, 0)
           .setAcceleration(0, 0)
-        this.#playerOne.isImmersed = false
-        this.#playerOne.setGravityY(0)
-        this.#playerOne.isDoneBobbing = false
-        this.#playerOne.respawnedPreviousFrame = true
+        this.playerOne.isImmersed = false
+        this.playerOne.setGravityY(0)
+        this.playerOne.isDoneBobbing = false
+        this.playerOne.respawnedPreviousFrame = true
       }
-      this.#playerOne.respawnedPreviousFrame = false
+      this.playerOne.respawnedPreviousFrame = false
 
       if (!this.initialSpawn) throw new Error()
 
@@ -243,7 +246,7 @@ export class BobberScene extends Scene {
         buoy1LightAbsoluteMiddleY,
         'buoyActivate'
       )
-      // activate1.setDisplayOrigin(0, 0)2
+
       this.anims.createFromAseprite('buoyActivate', undefined, activate1)
 
       buoy1.play({ key: 'default', repeat: -1 })
@@ -263,15 +266,15 @@ export class BobberScene extends Scene {
 
       this.#kill.setCollisionByExclusion([-1], true)
 
-      this.physics.add.collider(this.#playerOne, this.#kill, () => {
-        this.#playerOne?.setPosition(
+      this.physics.add.collider(this.playerOne, this.#kill, () => {
+        this.playerOne?.setPosition(
           this.initialSpawn?.x,
           this.initialSpawn?.y ?? 0 - 50
         )
-        this.#playerOne?.setVelocity(0, 0)
+        this.playerOne?.setVelocity(0, 0)
       })
     }
-    if (!this.#playerOne) throw new Error()
+    if (!this.playerOne) throw new Error()
     if (!this.initialSpawn) throw new Error()
     this.textures.generate('ground', {
       data: ['1'],
@@ -338,7 +341,9 @@ export class BobberScene extends Scene {
         if (!this.input.keyboard) {
           throw new Error('Keyboard property of input is falsy')
         }
-        if (!this.#playerOne) return
+        if (!this.playerOne) return
+
+        this.input.keyboard.removeAllKeys(true, true)
 
         const spaceBar = this.input.keyboard.addKey(
           Phaser.Input.Keyboard.KeyCodes.SPACE
@@ -358,33 +363,34 @@ export class BobberScene extends Scene {
 
         spaceBar
           .on('down', () => {
-            if (this.#playerOne?.isImmersed) {
-              this.#playerOne?.setVelocityY(100)
-              this.#playerOne.keyInfo.down = true
+            console.log('spacebar pressed')
+            if (this.playerOne?.isImmersed) {
+              this.playerOne?.setVelocityY(100)
+              this.playerOne.keyInfo.down = true
             }
           })
           .on('up', () => {
-            if (!this.#playerOne) return
-            this.#playerOne.keyInfo.down = false
+            if (!this.playerOne) return
+            this.playerOne.keyInfo.down = false
           })
 
         right
           .on('down', () => {
-            if (!this.#playerOne) return
-            this.#playerOne.keyInfo.right = true
+            if (!this.playerOne) return
+            this.playerOne.keyInfo.right = true
             this.setHorizontalAcceleration('right')
             this.isRunning = true
           })
           .on('up', () => {
-            if (!this.#playerOne) return
+            if (!this.playerOne) return
 
-            this.#playerOne.keyInfo.right = false
+            this.playerOne.keyInfo.right = false
             // This conditional is so we don't set accel to 0 when releasing
             // the right key if both the left and right key are pressed, and
             // the object is currently accelerating left
-            if ((this.#playerOne?.body.acceleration?.x ?? 0) > 0) {
-              this.#playerOne?.setAccelerationX(0)
-              this.#playerOne.brakingInfo = {
+            if ((this.playerOne?.body.acceleration?.x ?? 0) > 0) {
+              this.playerOne?.setAccelerationX(0)
+              this.playerOne.brakingInfo = {
                 isBraking: false,
                 directionBeforeBraking: undefined,
               }
@@ -394,19 +400,19 @@ export class BobberScene extends Scene {
 
         left
           .on('down', () => {
-            if (!this.#playerOne) return
-            this.#playerOne.keyInfo.left = true
+            if (!this.playerOne) return
+            this.playerOne.keyInfo.left = true
             this.setHorizontalAcceleration('left')
             this.isRunning = true
             stickyMessage({ _id: 'left' }, 'left: down')
           })
           .on('up', () => {
-            if (!this.#playerOne) return
-            this.#playerOne.keyInfo.left = false
+            if (!this.playerOne) return
+            this.playerOne.keyInfo.left = false
             // See right key up event explanation
-            if ((this.#playerOne?.body.acceleration?.x ?? 0) < 0) {
-              this.#playerOne?.setAccelerationX(0)
-              this.#playerOne.brakingInfo = {
+            if ((this.playerOne?.body.acceleration?.x ?? 0) < 0) {
+              this.playerOne?.setAccelerationX(0)
+              this.playerOne.brakingInfo = {
                 isBraking: false,
                 directionBeforeBraking: undefined,
               }
@@ -417,11 +423,8 @@ export class BobberScene extends Scene {
           })
 
         numPadOne.on('down', () => {
-          if (this.#playerOne && BobberScene.teleportCheat[0]) {
-            const dest: [number, number] = [
-              this.#playerOne.x,
-              this.#playerOne.y,
-            ]
+          if (this.playerOne && BobberScene.teleportCheat[0]) {
+            const dest: [number, number] = [this.playerOne.x, this.playerOne.y]
             if (BobberScene.HAS_LOCAL_STORAGE) {
               localStorage.setItem(
                 'teleport-cheat',
@@ -434,12 +437,12 @@ export class BobberScene extends Scene {
 
         numPadTwo.on('down', () => {
           if (
-            this.#playerOne &&
+            this.playerOne &&
             this.teleportDestination &&
             BobberScene.teleportCheat[0] &&
-            this.#playerOne.respawn
+            this.playerOne.respawn
           ) {
-            this.#playerOne.respawn()
+            this.playerOne.respawn()
           }
         })
       } catch (e: any) {
@@ -448,6 +451,8 @@ export class BobberScene extends Scene {
     }
 
     handleInputs()
+
+    this.events.on('resume', () => handleInputs(), this)
 
     // Create a one-pixel texture called 'pixel'
     this.textures.generate('pixel', {
@@ -478,31 +483,31 @@ export class BobberScene extends Scene {
     //   }
     // }
 
-    const playerBody = this.#playerOne.body as Phaser.Physics.Arcade.Body
+    const playerBody = this.playerOne.body as Phaser.Physics.Arcade.Body
 
     playerBody.onCollide = true
     if (this.#platforms) {
-      this.physics.add.collider(this.#playerOne, this.#platforms, () => {
-        if (!this.isOnGround && this.#playerOne?.body?.blocked.down) {
+      this.physics.add.collider(this.playerOne, this.#platforms, () => {
+        if (!this.isOnGround && this.playerOne?.body?.blocked.down) {
           dustCollision(
             [
-              this.#playerOne?.x! - this.#playerOne?.width! / 2,
-              this.#playerOne?.x! + this.#playerOne?.width! / 2,
+              this.playerOne?.x! - this.playerOne?.width! / 2,
+              this.playerOne?.x! + this.playerOne?.width! / 2,
             ],
             [
-              this.#playerOne?.y! + this.#playerOne?.height! / 2,
-              this.#playerOne?.y! + this.#playerOne?.height! / 2,
+              this.playerOne?.y! + this.playerOne?.height! / 2,
+              this.playerOne?.y! + this.playerOne?.height! / 2,
             ]
           )
-          this.#playerOne?.setDrag(0.2, 0)
+          this.playerOne?.setDrag(0.2, 0)
         }
 
         // The sprite hit the bottom side of the world bounds
         this.isOnGround = true
         // @todo Logic for reinstating movement if a left or right key is held down
-        if (this.#playerOne?.keyInfo.right) {
+        if (this.playerOne?.keyInfo.right) {
           this.setHorizontalAcceleration('right')
-        } else if (this.#playerOne?.keyInfo.left) {
+        } else if (this.playerOne?.keyInfo.left) {
           this.setHorizontalAcceleration('left')
         }
 
@@ -511,14 +516,14 @@ export class BobberScene extends Scene {
     }
 
     // if (this.#water) {
-    //   stickyMessage(this.#playerOne)
+    //   stickyMessage(this.playerOne)
     //   stickyMessage(this.#water)
     //   const overlap = this.physics.add.overlap(
-    //     this.#playerOne,
+    //     this.playerOne,
     //     this.#water,
     //     (thing) => {
     //       console.log('water collided')
-    //       // this.#playerOne?.body.setAllowGravity(false)
+    //       // this.playerOne?.body.setAllowGravity(false)
     //     },
     //     (ob1, ob2) => {
     //       console.count('lol')
@@ -530,7 +535,7 @@ export class BobberScene extends Scene {
     // Listen for the 'worldbounds' event
 
     // // You can also check for collisions with other objects
-    // this.physics.add.collider(this.#playerOne, anotherGameObject, (pixel, other) => {
+    // this.physics.add.collider(this.playerOne, anotherGameObject, (pixel, other) => {
     //     if (pixel.body.touching.down) {
     //         // The sprite's bottom side touched another game object
     //         this.onHitBottom(pixel);
@@ -542,56 +547,50 @@ export class BobberScene extends Scene {
   update(_time: number, _delta: number) {
     stickyMessage(
       'playerOne Net Gravity:',
-      (this.#playerOne?.body.gravity.y ?? 0) + GRAVITY
+      (this.playerOne?.body.gravity.y ?? 0) + GRAVITY
     )
-    stickyMessage('playerOne Velocity:', this.#playerOne?.body?.velocity)
-    stickyMessage(
-      'playerOne Acceleration:',
-      this.#playerOne?.body?.acceleration
-    )
-    stickyMessage('brakingInfo:', this.#playerOne?.brakingInfo)
-    if (!this.#playerOne || !this.initialSpawn) return
+    stickyMessage('playerOne Velocity:', this.playerOne?.body?.velocity)
+    stickyMessage('playerOne Acceleration:', this.playerOne?.body?.acceleration)
+    stickyMessage('brakingInfo:', this.playerOne?.brakingInfo)
+    if (!this.playerOne || !this.initialSpawn) return
 
     const nullIfOutsideLevel = this.#water?.getTileAtWorldXY(
-      this.#playerOne.body.x + this.#playerOne.body.width / 2,
-      this.#playerOne.body.y + this.#playerOne.body.height / 2,
+      this.playerOne.body.x + this.playerOne.body.width / 2,
+      this.playerOne.body.y + this.playerOne.body.height / 2,
       true
     )
 
     if (nullIfOutsideLevel === null) {
-      this.#playerOne?.setPosition(
-        this.initialSpawn.x,
-        this.initialSpawn.y - 50
-      )
-      this.#playerOne?.setVelocity(0, 0)
+      this.playerOne?.setPosition(this.initialSpawn.x, this.initialSpawn.y - 50)
+      this.playerOne?.setVelocity(0, 0)
     }
 
     // Don't waste time calculating super small velocity endlessly for drag
     if (
-      Math.abs(this.#playerOne?.body?.velocity.x ?? 0) < 0.1 &&
-      this.#playerOne?.body?.acceleration.x === 0
+      Math.abs(this.playerOne?.body?.velocity.x ?? 0) < 0.1 &&
+      this.playerOne?.body?.acceleration.x === 0
     ) {
-      this.#playerOne.body.velocity.x = 0
+      this.playerOne.body.velocity.x = 0
     }
 
     // Transition from increased abs value of decelleration of braking (60) to running's acceleration (30)
-    if (this.#playerOne.brakingInfo.isBraking) {
+    if (this.playerOne.brakingInfo.isBraking) {
       if (
-        this.#playerOne.brakingInfo.directionBeforeBraking === 'right' &&
-        this.#playerOne.body.velocity.x < 0
+        this.playerOne.brakingInfo.directionBeforeBraking === 'right' &&
+        this.playerOne.body.velocity.x < 0
       ) {
-        this.#playerOne.body.setAccelerationX(-30)
-        this.#playerOne.brakingInfo = {
+        this.playerOne.body.setAccelerationX(-30)
+        this.playerOne.brakingInfo = {
           isBraking: false,
           directionBeforeBraking: undefined,
         }
       }
       if (
-        this.#playerOne.brakingInfo.directionBeforeBraking === 'left' &&
-        this.#playerOne.body.velocity.x > 0
+        this.playerOne.brakingInfo.directionBeforeBraking === 'left' &&
+        this.playerOne.body.velocity.x > 0
       ) {
-        this.#playerOne.body.setAccelerationX(30)
-        this.#playerOne.brakingInfo = {
+        this.playerOne.body.setAccelerationX(30)
+        this.playerOne.brakingInfo = {
           isBraking: false,
           directionBeforeBraking: undefined,
         }
@@ -599,77 +598,77 @@ export class BobberScene extends Scene {
     }
 
     // @ts-ignore
-    // stickyMessage(this.#playerOne?.body?.drag)
+    // stickyMessage(this.playerOne?.body?.drag)
 
-    // stickyMessage(this.#playerOne?.body?.velocity)
+    // stickyMessage(this.playerOne?.body?.velocity)
 
     // Apply friction factor to the player's velocity and make it frame rate independent
 
-    if (this.#playerOne?.body) {
-      // if (!this.isRunning && this.#playerOne?.body?.velocity.x) {
-      //   this.#playerOne.body.velocity.x *= Math.pow(friction, deltaInSeconds)
+    if (this.playerOne?.body) {
+      // if (!this.isRunning && this.playerOne?.body?.velocity.x) {
+      //   this.playerOne.body.velocity.x *= Math.pow(friction, deltaInSeconds)
 
       //   // Stop the sprite if the velocity is very low
-      //   if (Math.abs(this.#playerOne.body.velocity.x) < 0.1) {
-      //     this.#playerOne.body.velocity.x = 0
+      //   if (Math.abs(this.playerOne.body.velocity.x) < 0.1) {
+      //     this.playerOne.body.velocity.x = 0
       //   }
       // }
 
       const tile = this.#water?.getTileAtWorldXY(
-        this.#playerOne.body.x + this.#playerOne.body.width / 2,
-        this.#playerOne.body.y + this.#playerOne.body.height / 3
+        this.playerOne.body.x + this.playerOne.body.width / 2,
+        this.playerOne.body.y + this.playerOne.body.height / 3
       )
-      let wasImmersedPreviousFrame = this.#playerOne.isImmersed
+      let wasImmersedPreviousFrame = this.playerOne.isImmersed
       if (tile?.index === 17 || tile?.index === 33) {
-        this.#playerOne.isImmersed = true
+        this.playerOne.isImmersed = true
       } else {
-        this.#playerOne.isImmersed = false
+        this.playerOne.isImmersed = false
       }
-      if (this.#playerOne.isImmersed !== wasImmersedPreviousFrame) {
+      if (this.playerOne.isImmersed !== wasImmersedPreviousFrame) {
         const magnitudeReduction = 1
-        const playerVelocity = this.#playerOne.body.velocity.y
+        const playerVelocity = this.playerOne.body.velocity.y
         if (playerVelocity > 0) {
-          this.#playerOne.body.setVelocityY(playerVelocity - magnitudeReduction)
+          this.playerOne.body.setVelocityY(playerVelocity - magnitudeReduction)
         } else if (playerVelocity < 0) {
-          this.#playerOne.body.setVelocityY(playerVelocity + magnitudeReduction)
+          this.playerOne.body.setVelocityY(playerVelocity + magnitudeReduction)
         }
       }
-      stickyMessage({ isImmersed: this.#playerOne.isImmersed })
+      stickyMessage({ isImmersed: this.playerOne.isImmersed })
 
-      if (!this.#playerOne.isDoneBobbing) {
-        if (this.#playerOne.isImmersed) {
-          this.#playerOne.setGravityY(-2 * GRAVITY)
+      if (!this.playerOne.isDoneBobbing) {
+        if (this.playerOne.isImmersed) {
+          this.playerOne.setGravityY(-2 * GRAVITY)
         } else {
-          this.#playerOne.setGravityY(0)
+          this.playerOne.setGravityY(0)
         }
       }
 
       if (
-        this.#playerOne.body.velocity.y < 10 &&
-        this.#playerOne.isImmersed &&
-        this.#playerOne.isImmersed !== wasImmersedPreviousFrame &&
-        !this.#playerOne.respawnedPreviousFrame
+        this.playerOne.body.velocity.y < 10 &&
+        this.playerOne.isImmersed &&
+        this.playerOne.isImmersed !== wasImmersedPreviousFrame &&
+        !this.playerOne.respawnedPreviousFrame
       ) {
-        this.#playerOne.respawnedPreviousFrame = false
-        this.#playerOne.setGravityY(-GRAVITY)
-        this.#playerOne.body.setVelocityY(0)
-        this.#playerOne.isDoneBobbing = true
+        this.playerOne.respawnedPreviousFrame = false
+        this.playerOne.setGravityY(-GRAVITY)
+        this.playerOne.body.setVelocityY(0)
+        this.playerOne.isDoneBobbing = true
       }
 
-      if (this.#playerOne.isDoneBobbing && this.#playerOne.isImmersed) {
-        if (this.#playerOne.keyInfo.left || this.#playerOne.keyInfo.right) {
-          this.#playerOne.setVelocityY(-20)
-          this.#playerOne.isDoneBobbing = false
+      if (this.playerOne.isDoneBobbing && this.playerOne.isImmersed) {
+        if (this.playerOne.keyInfo.left || this.playerOne.keyInfo.right) {
+          this.playerOne.setVelocityY(-20)
+          this.playerOne.isDoneBobbing = false
         }
-        if (this.#playerOne.keyInfo.down) {
-          this.#playerOne.isDoneBobbing = false
+        if (this.playerOne.keyInfo.down) {
+          this.playerOne.isDoneBobbing = false
         }
       }
 
       if (this.#water) {
         // If we're passing through the top layer of water
         const tile = this.getTileAtBottomOfSprite(
-          this.#playerOne,
+          this.playerOne,
           this.#water,
           17
         )
@@ -677,27 +676,29 @@ export class BobberScene extends Scene {
 
         if (tile) {
           const percentOverlap = this.calculateVerticalOverlap(
-            this.#playerOne,
+            this.playerOne,
             tile
           )
 
-          // this.#playerOne.setGravityY(-GRAVITY * (percentOverlap / 100))
+          // this.playerOne.setGravityY(-GRAVITY * (percentOverlap / 100))
 
           stickyMessage(percentOverlap)
-        } else if (this.#playerOne.isImmersed) {
-          this.#playerOne.setGravityY(-2 * GRAVITY)
+        } else if (this.playerOne.isImmersed) {
+          this.playerOne.setGravityY(-2 * GRAVITY)
         }
       }
 
-      if (!this.#playerOne.body.blocked.down) {
-        this.#playerOne?.setDrag(0.75, 0)
+      if (!this.playerOne.body.blocked.down) {
+        this.playerOne?.setDrag(0.75, 0)
         this.isOnGround = false
-        if (this.#playerOne.keyInfo.right) {
+        if (this.playerOne.keyInfo.right) {
           this.setHorizontalAcceleration('right')
-        } else if (this.#playerOne.keyInfo.left) {
+        } else if (this.playerOne.keyInfo.left) {
           this.setHorizontalAcceleration('left')
         }
       }
     }
   }
 }
+
+export default BobberScene
