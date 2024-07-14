@@ -110,6 +110,17 @@ const HEIGHT = 240
 const GRAVITY = 128
 
 const canvas = document.getElementById('game') as HTMLCanvasElement
+// https://stackoverflow.com/questions/51217147/how-to-use-a-local-font-in-phaser-3
+function loadFont(family: string, url: string) {
+  var newFont = new FontFace(family, `url('${url}')`);
+  newFont.load().then(function (loaded) {
+      document.fonts.add(loaded);
+  }).catch(function (error) {
+      console.error(error)
+  });
+}
+// https://www.dafont.com/early-gameboy.font
+loadFont('gameboy', './Early GameBoy.ttf')
 
 const SCREEN_CENTER = [WIDTH / 2, HEIGHT / 2]
 const FONT_SIZE = 16

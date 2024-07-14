@@ -43,7 +43,7 @@ export class BobberScene extends Scene {
   static HAS_LOCAL_STORAGE = false
 
   inspectorScene: any
-  #textbox?: GameObjects.Text
+  #timerText?: GameObjects.Text
   playerOne?: IPlayer
   // @ts-ignore
   #generatedPlatforms: (Phaser.GameObjects.Image & {
@@ -208,6 +208,12 @@ export class BobberScene extends Scene {
   }
 
   create() {
+    this.#timerText = this.add.text(WIDTH * 0.8, HEIGHT * 0.05, '00', {
+      fontSize: `10px`,
+      color: '#FFF',
+      fontFamily: 'gameboy',
+    })
+    // .setOrigin(0.5, 1)
     this.physics.world.setBounds(0, 0, WIDTH * 11, HEIGHT)
     this.cameras.main.setBounds(0, 0, 1024 * 4, HEIGHT)
 
@@ -582,7 +588,16 @@ export class BobberScene extends Scene {
     // }
   }
 
-  update(_time: number, _delta: number) {
+  update(time: number, _delta: number) {
+    const fullSeconds = Math.floor(time / 1000)
+    const fullMinutes = Math.floor(fullSeconds / 60)
+    const remainderSeconds = fullSeconds % 60
+    const timeString = `${fullMinutes}:${
+      remainderSeconds < 10 ? '0' + remainderSeconds : remainderSeconds
+    }`
+    this.#timerText?.setText(timeString)
+    this.#timerText?.setScrollFactor(0)
+    console.log(this.cameras.main.getBounds().x)
     stickyMessage(
       'playerOne Net Gravity:',
       (this.playerOne?.body.gravity.y ?? 0) + GRAVITY
