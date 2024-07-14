@@ -68,6 +68,7 @@ maintainAspectRatio(document.getElementById('game'), 16 / 15)
 // BobberScene.teleportCheat = [true, 0, 0]
 
 const HAS_LOCAL_STORAGE = isLocalStorageAvailable()
+BobberScene.HAS_LOCAL_STORAGE = HAS_LOCAL_STORAGE
 const toggleStanDebug = () => {
   document.getElementById('info')?.classList.toggle('displayNone')
 }
@@ -86,7 +87,6 @@ const toggleTeleportCheat = (coordinateArray?: [number, number] | null) => {
     ]
   }
   console.log(BobberScene.teleportCheat)
-  BobberScene.HAS_LOCAL_STORAGE = HAS_LOCAL_STORAGE
 }
 
 // apply local settings from local storage

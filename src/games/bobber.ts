@@ -8,9 +8,7 @@ const WIDTH = 256
 const HEIGHT = 240
 const GRAVITY = 128
 
-
-
-interface spawnLocation extends GameObjects.GameObject {
+interface spawnLocation extends Phaser.Types.Tilemaps.TiledObject {
   x: number
   y: number
 }
@@ -52,7 +50,7 @@ export class BobberScene extends Scene {
   #platforms?: Phaser.Tilemaps.TilemapLayer
   #water?: Phaser.Tilemaps.TilemapLayer
   #kill?: Phaser.Tilemaps.TilemapLayer | null
-  initialSpawn?: spawnLocation[]
+  initialSpawn?: spawnLocation
 
   isRunning = false
   isOnGround = false
@@ -161,13 +159,34 @@ export class BobberScene extends Scene {
 
     const map = this.make.tilemap({ key: 'tilemapLevel1' })
     const tileset = map.addTilesetImage('tiles', 'tiles')
-    if (tileset) {
-      this.initialSpawn = map.createFromObjects('Spawn', {
-        name: 'playerSpawn',
-      }) as spawnLocation[]
+
+    const spawnLayer = map.getObjectLayer('Spawn')
+
+    if (!spawnLayer) {
+      return
+    }
+    const playerSpawn = spawnLayer.objects.find(
+      (obj): obj is spawnLocation =>
+        obj.name === 'playerSpawn' &&
+        typeof obj.x === 'number' &&
+        typeof obj.y === 'number'
+    )
+
+    const checkpoint = spawnLayer.objects.find(
+      (obj): obj is spawnLocation =>
+        obj.type === 'checkpoint' &&
+        typeof obj.x === 'number' &&
+        typeof obj.y === 'number'
+    )
+    if (!checkpoint) {
+      throw new Error('checkpoint is not defined')
+    }
+
+    if (playerSpawn && tileset) {
+      this.initialSpawn = playerSpawn
       this.#playerOne = this.physics.add.sprite(
-        this.initialSpawn[0].x,
-        this.initialSpawn[0].y - 50,
+        this.initialSpawn.x ?? 0,
+        this.initialSpawn.y ?? 0 - 50,
         'player'
       ) as IPlayer
       this.#playerOne.body
@@ -193,7 +212,7 @@ export class BobberScene extends Scene {
       this.#playerOne.setDamping(true)
       this.#playerOne.isImmersed = false
       this.#playerOne.isDoneBobbing = false
-      this.#playerOne.setDepth(1)
+      this.#playerOne.setDepth(-1)
       this.cameras.main.startFollow(this.#playerOne, true)
       this.#playerOne.respawn = (dest = this.teleportDestination) => {
         if (!this.#playerOne) return
@@ -209,24 +228,26 @@ export class BobberScene extends Scene {
       this.#playerOne.respawnedPreviousFrame = false
 
       if (!this.initialSpawn) throw new Error()
-      
-      const thing = this.physics.add.sprite(
-        this.initialSpawn[0].x + 80,
-        this.initialSpawn[0].y - 50,
-        'buoy'
-      )
-      this.anims.createFromAseprite('buoy', undefined, thing)
-      
-      const thing2 = this.physics.add.sprite(
-        this.initialSpawn[0].x + 205,
-        this.initialSpawn[0].y - 50,
+
+      const buoy1 = this.add.sprite(checkpoint.x, checkpoint.y, 'buoy')
+      const buoy1RelativeOrigin = [0.5 * buoy1.width, 0.85 * buoy1.height]
+      buoy1.setDisplayOrigin(...buoy1RelativeOrigin)
+      this.anims.createFromAseprite('buoy', undefined, buoy1)
+
+      const buoy1AbsoluteMiddleX = buoy1.x
+      const buoy1AbsoluteTopY = buoy1.y - buoy1RelativeOrigin[1]
+      const buoy1LightAbsoluteMiddleX = buoy1AbsoluteMiddleX - 2
+      const buoy1LightAbsoluteMiddleY = buoy1AbsoluteTopY + 1
+      const activate1 = this.add.sprite(
+        buoy1LightAbsoluteMiddleX,
+        buoy1LightAbsoluteMiddleY,
         'buoyActivate'
       )
-      this.anims.createFromAseprite('buoyActivate', undefined, thing2)
-      thing.body.setBounce(0.3)
-      thing.play({ key: 'default', repeat: -1 })
-      thing2.body.setBounce(0.3)
-      thing2.play({ key: 'default', repeat: -1 })
+      // activate1.setDisplayOrigin(0, 0)2
+      this.anims.createFromAseprite('buoyActivate', undefined, activate1)
+
+      buoy1.play({ key: 'default', repeat: -1 })
+      activate1.play({ key: 'default', repeat: -1 })
 
       this.#water = map.createLayer('water', tileset)!
       this.#water!.setCollisionByExclusion([-1], true)
@@ -234,8 +255,7 @@ export class BobberScene extends Scene {
       this.#platforms!.setCollisionByExclusion([-1], true)
       this.#kill = map.createLayer('kill', tileset)
 
-      this.physics.add.collider(thing, this.#platforms)
-      this.physics.add.collider(thing2, this.#platforms)
+      this.physics.add.collider(buoy1, this.#platforms)
 
       if (!this.#kill) {
         throw new Error(`kill is ${this.#kill} but cannot be falsy`)
@@ -245,8 +265,8 @@ export class BobberScene extends Scene {
 
       this.physics.add.collider(this.#playerOne, this.#kill, () => {
         this.#playerOne?.setPosition(
-          this.initialSpawn?.[0].x,
-          this.initialSpawn?.[0].y ?? 0 - 50
+          this.initialSpawn?.x,
+          this.initialSpawn?.y ?? 0 - 50
         )
         this.#playerOne?.setVelocity(0, 0)
       })
@@ -460,7 +480,6 @@ export class BobberScene extends Scene {
 
     const playerBody = this.#playerOne.body as Phaser.Physics.Arcade.Body
 
-
     playerBody.onCollide = true
     if (this.#platforms) {
       this.physics.add.collider(this.#playerOne, this.#platforms, () => {
@@ -541,8 +560,8 @@ export class BobberScene extends Scene {
 
     if (nullIfOutsideLevel === null) {
       this.#playerOne?.setPosition(
-        this.initialSpawn[0].x,
-        this.initialSpawn[0].y - 50
+        this.initialSpawn.x,
+        this.initialSpawn.y - 50
       )
       this.#playerOne?.setVelocity(0, 0)
     }
