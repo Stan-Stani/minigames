@@ -190,6 +190,7 @@ export class BobberScene extends Scene {
   }
 
   preload() {
+    this.load.image('background1', './bobber/background1.png')
     this.load.image('player', './bobber/player.png')
     this.load.image('enemy', './enemy.png')
     this.load.aseprite({
@@ -213,7 +214,11 @@ export class BobberScene extends Scene {
       color: '#FFF',
       fontFamily: 'gameboy',
     })
-    // .setOrigin(0.5, 1)
+    
+    const background = this.add.image(0, 0, 'background1')
+    background.setOrigin(0, 0).setDepth(-4).setScrollFactor(0)
+
+
     this.physics.world.setBounds(0, 0, WIDTH * 11, HEIGHT)
     this.cameras.main.setBounds(0, 0, 1024 * 4, HEIGHT)
 
@@ -231,10 +236,6 @@ export class BobberScene extends Scene {
         typeof obj.x === 'number' &&
         typeof obj.y === 'number'
     )
-    console.log('hellod')
-    console.log('hellod')
-    console.log('hellod')
-    console.log('hellod')
     const checkpoints = spawnLayer.objects.filter(
       (obj): obj is spawnLocation =>
         obj.type === 'checkpoint' &&
