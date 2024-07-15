@@ -26,9 +26,13 @@ function isLocalStorageAvailable() {
 
 /** Ensures the canvas height does not exceed the viewport height.
  *  Runs once initially and then anytime window is resized. */
-function maintainAspectRatio(
+function manageAspectRatio(
   element: HTMLElement | null,
-  aspectRatio: number,
+  aspectRatioConfig: {
+    landscape: { width: number; height: number }
+    portrait: { width: number; height: number }
+  },
+  game: Phaser.Game,
   initialRun = true
 ) {
   if (!element) {
@@ -38,32 +42,42 @@ function maintainAspectRatio(
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight
 
-  // The width that is in aspect ratio to the viewPortHeight
-  let maxCanvasWidth = viewportHeight * aspectRatio
+  // // The width that is in aspect ratio to the viewPortHeight
+  // let maxCanvasWidth = viewportHeight * aspectRatio
 
-  // Ensure the canvas height does not exceed the viewport height
+  // // Ensure the canvas height does not exceed the viewport height
 
-  if (element) {
-    // Have to remove the property to check the vanilla relationship
-    element.style.removeProperty('max-width')
-    if (
-      element.clientWidth > maxCanvasWidth &&
-      element.clientHeight > viewportHeight
-    ) {
-      // force canvas width to conform to aspect ratio
-      element.style.maxWidth = `${maxCanvasWidth}px`
-    }
+  // if (element) {
+  //   // Have to remove the property to check the vanilla relationship
+  //   element.style.removeProperty('max-width')
+  //   if (
+  //     element.clientWidth > maxCanvasWidth &&
+  //     element.clientHeight > viewportHeight
+  //   ) {
+  //     // force canvas width to conform to aspect ratio
+  //     element.style.maxWidth = `${maxCanvasWidth}px`
+  //   }
+  // }
+
+  if (viewportWidth >= viewportHeight) {
+    game.scale.setGameSize(
+      aspectRatioConfig.landscape.width,
+      aspectRatioConfig.landscape.height
+    )
+  } else {
+    game.scale.setGameSize(
+      aspectRatioConfig.portrait.width,
+      aspectRatioConfig.portrait.height
+    )
   }
 
   if (initialRun) {
     // Resize the canvas when the window is resized
     window.addEventListener('resize', () =>
-      maintainAspectRatio(element, aspectRatio, false)
+      manageAspectRatio(element, aspectRatioConfig, game, false)
     )
   }
 }
-
-maintainAspectRatio(document.getElementById('game'), 16 / 15)
 
 // BobberScene.teleportCheat = [true, 0, 0]
 
@@ -106,23 +120,27 @@ if (HAS_LOCAL_STORAGE) {
 }
 
 const WIDTH = 256
-const HEIGHT = 240
+const GAME_HEIGHT = 240
+const MOBILE_INPUT_HEIGHT = 50
 const GRAVITY = 128
 
 const canvas = document.getElementById('game') as HTMLCanvasElement
 // https://stackoverflow.com/questions/51217147/how-to-use-a-local-font-in-phaser-3
 function loadFont(family: string, url: string) {
-  var newFont = new FontFace(family, `url('${url}')`);
-  newFont.load().then(function (loaded) {
-      document.fonts.add(loaded);
-  }).catch(function (error) {
+  var newFont = new FontFace(family, `url('${url}')`)
+  newFont
+    .load()
+    .then(function (loaded) {
+      document.fonts.add(loaded)
+    })
+    .catch(function (error) {
       console.error(error)
-  });
+    })
 }
 // https://www.dafont.com/early-gameboy.font
 loadFont('gameboy', './Early GameBoy.ttf')
 
-const SCREEN_CENTER = [WIDTH / 2, HEIGHT / 2]
+const SCREEN_CENTER = [WIDTH / 2, GAME_HEIGHT / 2]
 const FONT_SIZE = 16
 const LINE_HEIGHT = 21
 const FONT_OPTIONS = {
@@ -263,8 +281,8 @@ class MenuScene extends Scene implements IMenuScene {
     menuItems.forEach((menuItem, index) => {
       const yCoord = (function putLastItemAtBottom() {
         return menuItems.length - 1 !== index
-          ? HEIGHT / 10 + LINE_HEIGHT * index
-          : HEIGHT - LINE_HEIGHT
+          ? GAME_HEIGHT / 10 + LINE_HEIGHT * index
+          : GAME_HEIGHT - LINE_HEIGHT
       })()
 
       let text = this.add
@@ -324,7 +342,7 @@ function getSceneToLoadFromURL(
 const config: Phaser.Types.Core.GameConfig = {
   type: WEBGL,
   width: WIDTH,
-  height: HEIGHT,
+  height: GAME_HEIGHT,
   canvas,
   physics: {
     default: 'arcade',
@@ -341,13 +359,23 @@ const config: Phaser.Types.Core.GameConfig = {
   ]),
   pixelArt: true,
   scale: {
+    mode: Phaser.Scale.FIT,
     parent: 'game-wrapper',
     width: WIDTH,
-    height: HEIGHT,
+    height: GAME_HEIGHT,
   },
 }
 
 const game = new Game(config)
+
+manageAspectRatio(
+  document.getElementById('game'),
+  {
+    landscape: { width: 256, height: GAME_HEIGHT },
+    portrait: { width: 256, height: GAME_HEIGHT + MOBILE_INPUT_HEIGHT },
+  },
+  game
+)
 
 // Thanks Claude 3.5 Sonnet!
 if (import.meta.hot) {
@@ -368,7 +396,7 @@ if (import.meta.hot) {
         console.log(`Hot-reloading scene: ${sceneName}`)
         console.log(game.scene.getScene(sceneName))
         const oldScene = game.scene.getScene<BobberScene>(sceneName)
-       
+
         let isActive = false
         let oldPlayerOne: IPlayer | undefined
         if (game.scene.isActive(sceneName)) {
@@ -383,11 +411,10 @@ if (import.meta.hot) {
         console.log(`Adding new scene: ${sceneName}`)
         game.scene.add(sceneName, newScene, false)
 
-
         if (isActive) {
           console.log(`Restarting scene: ${sceneName}`)
           console.log(oldPlayerOne.x)
-          
+
           game.scene.start(sceneName)
           newScene.playerOne.x = oldPlayerOne.x
           newScene.playerOne.y = oldPlayerOne.y

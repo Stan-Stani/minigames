@@ -29,8 +29,9 @@ body {
   justify-self: flex-end;
 }
 
-.flex-grow-and-shrink {
-  flex: 1 1;
+.flex-row-grow-and-shrink {
+  flex: 1 1 0;
+  width: 0;
 }
 
 .displayNone {
@@ -38,7 +39,10 @@ body {
 }
 
 
-
+#info {
+  overflow-y: hidden;
+  overflow-x: auto;
+}
 #log {
   /* position: absolute; */
   top: 0;
@@ -59,7 +63,6 @@ body {
 }
 
 #game-wrapper {
-  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -67,11 +70,11 @@ body {
 
 #game {
   
-  width: 100%;
-  height: auto;
+  /* width: 100%; */
+  /* height: auto; */
   /* max-height: 100vh; */
   box-sizing: content-box;
-  aspect-ratio: 16/15;
+  /* aspect-ratio: 256/290; */
 }
 
 .fade-in {
