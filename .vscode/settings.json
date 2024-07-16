@@ -1,1 +1,8 @@
-{"editor.suggest.localityBonus": false}
+{
+    "editor.suggest.localityBonus": false,
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#54005C",
+        "titleBar.activeBackground": "#760080",
+        "titleBar.activeForeground": "#FFF9FF"
+    }
+}

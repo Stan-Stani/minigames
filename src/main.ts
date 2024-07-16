@@ -1,7 +1,9 @@
 import './style.css'
 import { Game, Scene, WEBGL } from 'phaser'
 import { PlatformerTestScene } from './games/platformerTest'
-import { BobberScene, IPlayer } from './games/bobber'
+import { BobberScene, IPlayer } from './games/bobber/bobber'
+import { BobberInputScene, InputScene } from './games/bobber/inputScene'
+
 
 interface IMenuItemSeed {
   id?: string
@@ -356,6 +358,7 @@ const config: Phaser.Types.Core.GameConfig = {
     ['menu', MenuScene],
     ['platformertest', PlatformerTestScene],
     ['bobber', BobberScene],
+    ['bobberInput', BobberInputScene]
   ]),
   pixelArt: true,
   scale: {

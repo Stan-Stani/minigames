@@ -1,9 +1,10 @@
 import { GameObjects, Scene } from 'phaser'
+import { BobberInputScene, InputScene } from './inputScene'
 import {
   clearStickyMessage,
   stickyMessage,
   toastMessage,
-} from '../debugging/tools'
+} from '../../debugging/tools'
 const WIDTH = 256
 const HEIGHT = 240
 const GRAVITY = 128
@@ -208,16 +209,31 @@ export class BobberScene extends Scene {
     this.load.tilemapTiledJSON('tilemapLevel1', './bobber/level1.json')
   }
 
+  diveButtonDown() {
+    console.log('spacebar pressed')
+    console.log(this)
+    if (this.playerOne?.isImmersed) {
+      console.log("Lalonde", 'imm')
+      this.playerOne?.setVelocityY(100)
+      this.playerOne.keyInfo.down = true
+    }
+  }
+  diveButtonUp() {
+    if (!this.playerOne) return
+    this.playerOne.keyInfo.down = false
+    console.log("Lalonde", 'diveButtonUp')
+  }
+
   create() {
+    this.scene.launch('BobberInputScene')
     this.#timerText = this.add.text(WIDTH * 0.8, HEIGHT * 0.05, '00', {
       fontSize: `10px`,
       color: '#FFF',
       fontFamily: 'gameboy',
     })
-    
+
     const background = this.add.image(0, 0, 'background1')
     background.setOrigin(0, 0).setDepth(-4).setScrollFactor(0)
-
 
     this.physics.world.setBounds(0, 0, WIDTH * 11, HEIGHT)
     this.cameras.main.setBounds(0, 0, 1024 * 4, HEIGHT)
@@ -407,18 +423,12 @@ export class BobberScene extends Scene {
         )
 
         spaceBar
-          .on('down', () => {
-            console.log('spacebar pressed')
-            if (this.playerOne?.isImmersed) {
-              this.playerOne?.setVelocityY(100)
-              this.playerOne.keyInfo.down = true
-            }
-          })
-          .on('up', () => {
-            if (!this.playerOne) return
-            this.playerOne.keyInfo.down = false
-          })
+          .on('down', this.diveButtonDown, this)
+          .on('up', this.diveButtonUp, this)
 
+        this.events.on('diveButtonDown', this.diveButtonDown, this)
+        this.events.on('diveButtonUp', this.diveButtonUp, this)
+        
         right
           .on('down', () => {
             if (!this.playerOne) return
