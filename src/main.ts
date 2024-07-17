@@ -367,6 +367,9 @@ const config: Phaser.Types.Core.GameConfig = {
     width: WIDTH,
     height: GAME_HEIGHT,
   },
+  input: {
+    activePointers: 3
+  }
 }
 
 const game = new Game(config)
