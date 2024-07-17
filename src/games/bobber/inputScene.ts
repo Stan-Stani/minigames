@@ -8,7 +8,7 @@ export class BobberInputScene extends Scene {
 
   create() {
     const BobberScene = this.scene.get<BobberScene>('BobberScene')
-    const LeftMobileInput = this.add.rectangle(20, 240, 25, 25, 0xff0000)
+    const LeftMobileInput = this.add.rectangle(0, 240, 50, 50, 0xff0000)
     LeftMobileInput.setOrigin(0, 0)
     LeftMobileInput.setInteractive()
     LeftMobileInput.on(
@@ -17,7 +17,7 @@ export class BobberInputScene extends Scene {
     )
     LeftMobileInput.on('pointerup', () => BobberScene.playerOne?.leftButonUp())
     LeftMobileInput.on('pointerout', () => BobberScene.playerOne?.leftButonUp())
-    const RightMobileInput = this.add.rectangle(45, 240, 25, 25, 0x0000ff)
+    const RightMobileInput = this.add.rectangle(50, 240, 50, 50, 0x0000ff)
     RightMobileInput.setOrigin(0, 0)
     RightMobileInput.setInteractive()
     RightMobileInput.on(
@@ -32,7 +32,7 @@ export class BobberInputScene extends Scene {
       'pointerout',
       () => BobberScene.playerOne?.rightButtonUp()
     )
-    const DiveMobileInput = this.add.rectangle(220, 240, 25, 25, 0x00ffff)
+    const DiveMobileInput = this.add.rectangle(206, 240, 50, 50, 0x00ffff)
     DiveMobileInput.setOrigin(0, 0)
     DiveMobileInput.setInteractive()
     DiveMobileInput.on(
