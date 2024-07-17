@@ -5,6 +5,7 @@ import {
   stickyMessage,
   toastMessage,
 } from '../../debugging/tools'
+import { Player } from './Player'
 const WIDTH = 256
 const HEIGHT = 240
 const GRAVITY = 128
@@ -14,27 +15,7 @@ interface spawnLocation extends Phaser.Types.Tilemaps.TiledObject {
   y: number
 }
 
-export interface IPlayer
-  extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
-  brakingInfo: {
-    isBraking: boolean
-    // direction body was moving when braking started
-    directionBeforeBraking?: 'right' | 'left'
-  }
-  keyInfo: {
-    right: boolean
-    left: boolean
-    space: boolean
-    down: boolean
-    numPadOne: boolean
-    numPadTwo: boolean
-  }
-  isImmersed: boolean
-  isDoneBobbing: boolean
-  respawn?: (coordArr?: [number, number]) => void
-  respawnedPreviousFrame?: boolean
-  respawnDestination?: [number, number]
-}
+
 
 export class BobberScene extends Scene {
   constructor() {
@@ -45,7 +26,7 @@ export class BobberScene extends Scene {
 
   inspectorScene: any
   #timerText?: GameObjects.Text
-  playerOne?: IPlayer
+  playerOne?: Player
   // @ts-ignore
   #generatedPlatforms: (Phaser.GameObjects.Image & {
     body: Phaser.Physics.Arcade.StaticBody
@@ -111,44 +92,7 @@ export class BobberScene extends Scene {
     })
   }
 
-  /** Attempts to set the acceleration of the player in the given direction */
-  setHorizontalAcceleration(direction: 'left' | 'right') {
-    if (!this.playerOne) return
-    let baseAcceleration: number
-    /** Returns true if player is accelerating in direction of
-     * current velocity
-     */
-    let conditionalResultToUse: boolean
-    let directionBeforeBraking: 'left' | 'right'
-    if (direction === 'left') {
-      baseAcceleration = -30
-      conditionalResultToUse = (this.playerOne?.body.velocity?.x ?? 0) <= 0
-      directionBeforeBraking = 'right'
-      // this.playerOne?.setFlipX(true)
-    } else if (direction === 'right') {
-      baseAcceleration = 30
-      conditionalResultToUse = (this.playerOne?.body.velocity?.x ?? 0) >= 0
-      directionBeforeBraking = 'left'
-      // this.playerOne?.setFlipX(false)
-    } else {
-      return
-    }
-    if (conditionalResultToUse && this.isOnGround) {
-      this.playerOne?.setAccelerationX(baseAcceleration)
-    } else if (this.isOnGround) {
-      // else we are trying to slow down while sliding in the other direction
-
-      this.playerOne.brakingInfo = {
-        isBraking: true,
-        directionBeforeBraking: directionBeforeBraking,
-      }
-      this.playerOne?.setAccelerationX(2 * baseAcceleration)
-    } else if (this.playerOne.isImmersed) {
-      this.playerOne.setAccelerationX(baseAcceleration * 2)
-    } else if (!this.isOnGround) {
-      this.playerOne.setAccelerationX(baseAcceleration / 2)
-    }
-  }
+  
 
   getTileAtBottomOfSprite(
     sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody,
@@ -209,20 +153,7 @@ export class BobberScene extends Scene {
     this.load.tilemapTiledJSON('tilemapLevel1', './bobber/level1.json')
   }
 
-  diveButtonDown() {
-    console.log('spacebar pressed')
-    console.log(this)
-    if (this.playerOne?.isImmersed) {
-      console.log("Lalonde", 'imm')
-      this.playerOne?.setVelocityY(100)
-      this.playerOne.keyInfo.down = true
-    }
-  }
-  diveButtonUp() {
-    if (!this.playerOne) return
-    this.playerOne.keyInfo.down = false
-    console.log("Lalonde", 'diveButtonUp')
-  }
+  
 
   create() {
     this.scene.launch('BobberInputScene')
@@ -261,48 +192,9 @@ export class BobberScene extends Scene {
 
     if (playerSpawn && tileset) {
       this.initialSpawn = playerSpawn
-      this.playerOne = this.physics.add.sprite(
-        this.initialSpawn.x ?? 0,
-        this.initialSpawn.y ?? 0 - 50,
-        'player'
-      ) as IPlayer
-      this.playerOne.body
-        .setSize(10, 14)
-        .setOffset(this.playerOne.body.offset.x, 3)
-      const w = window as any
-      w.playerOne = this.playerOne
-
-      this.playerOne?.body.setBounce(0.3)
-
-      this.playerOne.brakingInfo = {
-        isBraking: false,
-        directionBeforeBraking: undefined,
-      }
-      this.playerOne.keyInfo = {
-        left: false,
-        right: false,
-        down: false,
-        space: false,
-        numPadOne: false,
-        numPadTwo: false,
-      }
-      this.playerOne.setDamping(true)
-      this.playerOne.isImmersed = false
-      this.playerOne.isDoneBobbing = false
-      this.playerOne.setDepth(-1)
-      this.cameras.main.startFollow(this.playerOne, true)
-      this.playerOne.respawn = (dest = this.teleportDestination) => {
-        if (!this.playerOne) return
-        this.playerOne
-          .setPosition(...dest)
-          .setVelocity(0, 0)
-          .setAcceleration(0, 0)
-        this.playerOne.isImmersed = false
-        this.playerOne.setGravityY(0)
-        this.playerOne.isDoneBobbing = false
-        this.playerOne.respawnedPreviousFrame = true
-      }
-      this.playerOne.respawnedPreviousFrame = false
+      this.playerOne = new Player(this)
+      
+     
 
       if (!this.initialSpawn) throw new Error()
 
@@ -423,83 +315,20 @@ export class BobberScene extends Scene {
         )
 
         spaceBar
-          .on('down', this.diveButtonDown, this)
-          .on('up', this.diveButtonUp, this)
-
-        this.events.on('diveButtonDown', this.diveButtonDown, this)
-        this.events.on('diveButtonUp', this.diveButtonUp, this)
+          .on('down', this.playerOne.diveButtonDown)
+          .on('up', this.playerOne.diveButtonUp)
         
         right
-          .on('down', () => {
-            if (!this.playerOne) return
-            this.playerOne.keyInfo.right = true
-            this.setHorizontalAcceleration('right')
-            this.isRunning = true
-          })
-          .on('up', () => {
-            if (!this.playerOne) return
-
-            this.playerOne.keyInfo.right = false
-            // This conditional is so we don't set accel to 0 when releasing
-            // the right key if both the left and right key are pressed, and
-            // the object is currently accelerating left
-            if ((this.playerOne?.body.acceleration?.x ?? 0) > 0) {
-              this.playerOne?.setAccelerationX(0)
-              this.playerOne.brakingInfo = {
-                isBraking: false,
-                directionBeforeBraking: undefined,
-              }
-            }
-            this.isRunning = false
-          })
+          .on('down', this.playerOne.rightButtonDown)
+          .on('up', this.playerOne.rightButtonUp)
 
         left
-          .on('down', () => {
-            if (!this.playerOne) return
-            this.playerOne.keyInfo.left = true
-            this.setHorizontalAcceleration('left')
-            this.isRunning = true
-            stickyMessage({ _id: 'left' }, 'left: down')
-          })
-          .on('up', () => {
-            if (!this.playerOne) return
-            this.playerOne.keyInfo.left = false
-            // See right key up event explanation
-            if ((this.playerOne?.body.acceleration?.x ?? 0) < 0) {
-              this.playerOne?.setAccelerationX(0)
-              this.playerOne.brakingInfo = {
-                isBraking: false,
-                directionBeforeBraking: undefined,
-              }
-            }
-            this.isRunning = false
+          .on('down', this.playerOne.leftButtonDown)
+          .on('up', this.playerOne.leftButonUp)
 
-            stickyMessage({ _id: 'left' }, 'left: up')
-          })
+        numPadOne.on('down', this.playerOne.setTeleportButtonDown)
+        numPadTwo.on('down', this.playerOne.invokeTeleportButtonDown)
 
-        numPadOne.on('down', () => {
-          if (this.playerOne && BobberScene.teleportCheat[0]) {
-            const dest: [number, number] = [this.playerOne.x, this.playerOne.y]
-            if (BobberScene.HAS_LOCAL_STORAGE) {
-              localStorage.setItem(
-                'teleport-cheat',
-                JSON.stringify([true, ...dest])
-              )
-            }
-            this.teleportDestination = dest
-          }
-        })
-
-        numPadTwo.on('down', () => {
-          if (
-            this.playerOne &&
-            this.teleportDestination &&
-            BobberScene.teleportCheat[0] &&
-            this.playerOne.respawn
-          ) {
-            this.playerOne.respawn()
-          }
-        })
       } catch (e: any) {
         toastMessage(e.message)
       }
