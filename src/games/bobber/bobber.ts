@@ -386,46 +386,20 @@ export class BobberScene extends Scene {
           this.playerOne?.setDrag(0.2, 0)
         }
 
+
         // The sprite hit the bottom side of the world bounds
         this.isOnGround = true
+        // @todo Is the below even necessary?
         // @todo Logic for reinstating movement if a left or right key is held down
         if (this.playerOne?.keyInfo.right) {
-          this.setHorizontalAcceleration('right')
+          this.playerOne.setHorizontalAcceleration('right')
         } else if (this.playerOne?.keyInfo.left) {
-          this.setHorizontalAcceleration('left')
+          this.playerOne.setHorizontalAcceleration('left')
         }
 
         // down && onHitBottom(playerBody.gameObject)
       })
     }
-
-    // if (this.#water) {
-    //   stickyMessage(this.playerOne)
-    //   stickyMessage(this.#water)
-    //   const overlap = this.physics.add.overlap(
-    //     this.playerOne,
-    //     this.#water,
-    //     (thing) => {
-    //       console.log('water collided')
-    //       // this.playerOne?.body.setAllowGravity(false)
-    //     },
-    //     (ob1, ob2) => {
-    //       console.count('lol')
-    //     }
-    //   )
-
-    // }
-
-    // Listen for the 'worldbounds' event
-
-    // // You can also check for collisions with other objects
-    // this.physics.add.collider(this.playerOne, anotherGameObject, (pixel, other) => {
-    //     if (pixel.body.touching.down) {
-    //         // The sprite's bottom side touched another game object
-    //         this.onHitBottom(pixel);
-    //     }
-    // });
-    // }
   }
 
   update(time: number, _delta: number) {
@@ -585,9 +559,9 @@ export class BobberScene extends Scene {
         this.playerOne?.setDrag(0.75, 0)
         this.isOnGround = false
         if (this.playerOne.keyInfo.right) {
-          this.setHorizontalAcceleration('right')
+          this.playerOne.setHorizontalAcceleration('right')
         } else if (this.playerOne.keyInfo.left) {
-          this.setHorizontalAcceleration('left')
+          this.playerOne.setHorizontalAcceleration('left')
         }
       }
     }

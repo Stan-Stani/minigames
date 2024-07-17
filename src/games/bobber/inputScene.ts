@@ -11,34 +11,34 @@ export class BobberInputScene extends Scene {
     const LeftMobileInput = this.add.rectangle(20, 240, 25, 25, 0xff0000)
     LeftMobileInput.setOrigin(0, 0)
     LeftMobileInput.setInteractive()
-    LeftMobileInput.on('pointerdown', () =>
-      BobberScene.diveButtonDown()
+    LeftMobileInput.on(
+      'pointerdown',
+      () => BobberScene.playerOne?.leftButtonDown()
     )
-    LeftMobileInput.on('pointerup', () =>
-      BobberScene.events.emit('leftButtonUp')
-    )
-    LeftMobileInput.on('pointerout', () =>
-      BobberScene.events.emit('leftButtonUp')
-    )
+    LeftMobileInput.on('pointerup', () => BobberScene.playerOne?.leftButonUp())
+    LeftMobileInput.on('pointerout', () => BobberScene.playerOne?.leftButonUp())
     const RightMobileInput = this.add.rectangle(45, 240, 25, 25, 0x0000ff)
     RightMobileInput.setOrigin(0, 0)
     RightMobileInput.setInteractive()
-    RightMobileInput.on('pointerdown', () =>
-      BobberScene.events.emit('rightButtonDown')
+    RightMobileInput.on(
+      'pointerdown',
+      () => BobberScene.playerOne?.rightButtonDown()
     )
-    RightMobileInput.on('pointerup', () =>
-      BobberScene.events.emit('rightButtonUp')
+    RightMobileInput.on(
+      'pointerup',
+      () => BobberScene.playerOne?.rightButtonUp()
     )
-    RightMobileInput.on('pointerout', () => BobberScene.playerOne)
+    RightMobileInput.on(
+      'pointerout',
+      () => BobberScene.playerOne?.rightButtonUp()
+    )
     const DiveMobileInput = this.add.rectangle(220, 240, 25, 25, 0x00ffff)
     DiveMobileInput.setOrigin(0, 0)
     DiveMobileInput.setInteractive()
-    DiveMobileInput.on('pointerdown', () =>
-      BobberScene.events.emit('diveButtonDown')
+    DiveMobileInput.on(
+      'pointerdown',
+      () => BobberScene.playerOne?.diveButtonDown()
     )
-    // Need special logic for if pointer moves off of button and then mouse ups
-    DiveMobileInput.on('pointerup', () =>
-      BobberScene.events.emit('diveButtonUp')
-    )
+    DiveMobileInput.on('pointerup', () => BobberScene.playerOne?.diveButtonUp())
   }
 }

@@ -71,9 +71,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.respawnedPreviousFrame = false
   }
 
-  diveButtonDown() {
-    console.log('spacebar pressed')
-    console.log(this)
+  // Using arrow functions to prevent Phaser from
+  // rebinding the methods' thises
+  diveButtonDown = () => {
     if (this.isImmersed) {
       console.log('Lalonde', 'imm')
       this.setVelocityY(100)
@@ -81,18 +81,18 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  diveButtonUp() {
+  diveButtonUp = () => {
     this.keyInfo.down = false
     console.log('Lalonde', 'diveButtonUp')
   }
 
-  rightButtonDown() {
+  rightButtonDown = () => {
     this.keyInfo.right = true
     this.setHorizontalAcceleration('right')
     this.isRunning = true
   }
 
-  rightButtonUp() {
+  rightButtonUp = () => {
     this.keyInfo.right = false
     // This conditional is so we don't set accel to 0 when releasing
     // the right key if both the left and right key are pressed, and
@@ -107,15 +107,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.isRunning = false
   }
 
-  leftButtonDown() {
-    if (!this) return
+  leftButtonDown = () => {
     this.keyInfo.left = true
     this.setHorizontalAcceleration('left')
     this.isRunning = true
   }
 
-  leftButonUp() {
-    if (!this) return
+  leftButonUp = () => {
     this.keyInfo.left = false
     // See right key up event explanation
     if ((this?.body.acceleration?.x ?? 0) < 0) {
@@ -128,7 +126,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.isRunning = false
   }
 
-  setTeleportButtonDown() {
+  setTeleportButtonDown = () => {
     if (this && BobberScene.teleportCheat[0]) {
       const dest: [number, number] = [this.x, this.y]
       if (BobberScene.HAS_LOCAL_STORAGE) {
@@ -138,7 +136,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  invokeTeleportButtonDown() {
+  invokeTeleportButtonDown = () => {
     if (
       this &&
       this.teleportDestination &&
@@ -150,7 +148,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   /** Attempts to set the acceleration of the player in the given direction */
-  setHorizontalAcceleration(direction: 'left' | 'right') {
+  setHorizontalAcceleration = (direction: 'left' | 'right') => {
     let baseAcceleration: number
     /** Returns true if player is accelerating in direction of
      * current velocity
