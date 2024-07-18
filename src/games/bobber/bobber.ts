@@ -15,8 +15,6 @@ interface spawnLocation extends Phaser.Types.Tilemaps.TiledObject {
   y: number
 }
 
-
-
 export class BobberScene extends Scene {
   constructor() {
     super('BobberScene')
@@ -92,8 +90,6 @@ export class BobberScene extends Scene {
     })
   }
 
-  
-
   getTileAtBottomOfSprite(
     sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody,
     tileLayer: Phaser.Tilemaps.TilemapLayer,
@@ -153,8 +149,6 @@ export class BobberScene extends Scene {
     this.load.tilemapTiledJSON('tilemapLevel1', './bobber/level1.json')
   }
 
-  
-
   create() {
     this.scene.launch('BobberInputScene')
     this.#timerText = this.add.text(WIDTH * 0.8, HEIGHT * 0.05, '00', {
@@ -193,8 +187,6 @@ export class BobberScene extends Scene {
     if (playerSpawn && tileset) {
       this.initialSpawn = playerSpawn
       this.playerOne = new Player(this)
-      
-     
 
       if (!this.initialSpawn) throw new Error()
 
@@ -317,7 +309,7 @@ export class BobberScene extends Scene {
         spaceBar
           .on('down', this.playerOne.diveButtonDown)
           .on('up', this.playerOne.diveButtonUp)
-        
+
         right
           .on('down', this.playerOne.rightButtonDown)
           .on('up', this.playerOne.rightButtonUp)
@@ -328,7 +320,6 @@ export class BobberScene extends Scene {
 
         numPadOne.on('down', this.playerOne.setTeleportButtonDown)
         numPadTwo.on('down', this.playerOne.invokeTeleportButtonDown)
-
       } catch (e: any) {
         toastMessage(e.message)
       }
@@ -386,7 +377,6 @@ export class BobberScene extends Scene {
           this.playerOne?.setDrag(0.2, 0)
         }
 
-
         // The sprite hit the bottom side of the world bounds
         this.isOnGround = true
         // @todo Is the below even necessary?
@@ -402,7 +392,7 @@ export class BobberScene extends Scene {
     }
   }
 
-  update(time: number, _delta: number) {
+  update(time: number, delta: number) {
     const fullSeconds = Math.floor(time / 1000)
     const fullMinutes = Math.floor(fullSeconds / 60)
     const remainderSeconds = fullSeconds % 60
@@ -428,8 +418,10 @@ export class BobberScene extends Scene {
     )
 
     if (nullIfOutsideLevel === null) {
-      this.playerOne?.setPosition(this.initialSpawn.x, this.initialSpawn.y - 50)
-      this.playerOne?.setVelocity(0, 0)
+      if (!this.playerOne?.respawn) {
+        return
+      }
+      this.playerOne?.respawn(this.playerOne?.respawnDestination)
     }
 
     // Don't waste time calculating super small velocity endlessly for drag
@@ -440,7 +432,7 @@ export class BobberScene extends Scene {
       this.playerOne.body.velocity.x = 0
     }
 
-    // Transition from increased abs value of decelleration of braking (60) to running's acceleration (30)
+    // Transition from increased abs value of deceleration of braking (60) to running's acceleration (30)
     if (this.playerOne.brakingInfo.isBraking) {
       if (
         this.playerOne.brakingInfo.directionBeforeBraking === 'right' &&
@@ -463,6 +455,8 @@ export class BobberScene extends Scene {
         }
       }
     }
+
+    this.playerOne.update(time, delta)
 
     // @ts-ignore
     // stickyMessage(this.playerOne?.body?.drag)

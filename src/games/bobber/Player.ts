@@ -1,4 +1,6 @@
+import { Scene } from 'phaser'
 import BobberScene from './bobber'
+import { stickyMessage } from '../../debugging/tools'
 
 export interface PlayerLike extends Player {}
 
@@ -30,6 +32,7 @@ export interface Player
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   declare body: Phaser.Physics.Arcade.Body
+
   constructor(scene: BobberScene) {
     if (!scene.initialSpawn) {
       throw new Error('initialSpawn is falsy')
@@ -57,14 +60,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.isImmersed = false
     this.isDoneBobbing = false
     this.setDepth(-1)
+    this.teleportDestination = BobberScene.teleportCheat.slice(1) as [number, number]
     scene.cameras.main.startFollow(this, true)
-    this.respawn = (dest = scene.teleportDestination) => {
-      if (!this) return
-      this.setPosition(...dest)
+    this.respawn = (dest) => {
+      this.setPosition(...(dest ?? this.teleportDestination ?? [0, 0]))
         .setVelocity(0, 0)
         .setAcceleration(0, 0)
       this.isImmersed = false
       this.setGravityY(0)
+      this.setAngle(0)
       this.isDoneBobbing = false
       this.respawnedPreviousFrame = true
     }
@@ -182,6 +186,25 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.setAccelerationX(baseAcceleration * 2)
     } else if (!this.isOnGround) {
       this.setAccelerationX(baseAcceleration / 2)
+    }
+  }
+
+  update(_time: number, delta: number) {
+    if (this.keyInfo.right && this.body.acceleration.x > 0) {
+      if (this.angle <= 30) {
+        this.angle += 0.06 * delta
+      }
+    } else if (this.keyInfo.left && this.body.acceleration.x < 0) {
+      if (this.angle >= -30) {
+        this.angle -= 0.06 * delta
+      }
+      // Experiencing drag
+    } else if (this.body.acceleration.x === 0 && this.body.velocity.x !== 0) {
+      if (this.angle < 0) {
+        this.angle += 0.03 * delta
+      } else if (this.angle > 0) {
+        this.angle -= 0.03 * delta
+      }
     }
   }
 }
