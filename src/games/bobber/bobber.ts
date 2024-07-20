@@ -144,6 +144,11 @@ export class BobberScene extends Scene {
       textureURL: './bobber/entities/buoyActivate.png',
       atlasURL: './bobber/entities/buoyActivate.json',
     })
+    this.load.aseprite({
+      key: 'skeletonWalk',
+      textureURL: './bobber/entities/skeletonWalk.png',
+      atlasURL: './bobber/entities/skeletonWalk.json',
+    })
 
     this.load.image('tiles', './bobber/tiles.png')
     this.load.tilemapTiledJSON('tilemapLevel1', './bobber/level1.json')
@@ -199,6 +204,20 @@ export class BobberScene extends Scene {
       checkpoints.forEach((cp) => {
         this.makeBuoyComposite(cp.x, cp.y)
       })
+
+      const skeletonWalk = this.physics.add.sprite(50, 100, 'skeletonWalk')
+      skeletonWalk.setImmovable(true)
+  
+      skeletonWalk.body.setAllowGravity(false)
+      skeletonWalk.setDepth(-2)
+      
+      const thisanim = this.anims.createFromAseprite(
+        'skeletonWalk',
+        undefined,
+        skeletonWalk
+      )
+    skeletonWalk.play({ key: 'default', repeat: -1})
+     console.log(thisanim)
 
       if (!this.#kill) {
         throw new Error(`kill is ${this.#kill} but cannot be falsy`)
