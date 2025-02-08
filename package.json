@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "peerjs": "^1.5.4",
     "phaser": "^3.70.0",
     "prettier": "^3.0.3"
   },

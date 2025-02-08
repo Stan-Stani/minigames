@@ -166,7 +166,7 @@ export class BobberScene extends Scene {
     background.setOrigin(0, 0).setDepth(-4).setScrollFactor(0)
 
     this.physics.world.setBounds(0, 0, WIDTH * 11, HEIGHT)
-    this.cameras.main.setBounds(0, 0, 1024 * 4, HEIGHT)
+    this.cameras.main.setBounds(0, 0, 1024 * 4, HEIGHT + 500)
 
     const map = this.make.tilemap({ key: 'tilemapLevel1' })
     const tileset = map.addTilesetImage('tiles', 'tiles')
@@ -191,6 +191,7 @@ export class BobberScene extends Scene {
 
     if (playerSpawn && tileset) {
       this.initialSpawn = playerSpawn
+      // this.initialSpawn = {x: 158 * 16, y: 7 * 16}
       this.playerOne = new Player(this)
 
       if (!this.initialSpawn) throw new Error()
@@ -204,6 +205,7 @@ export class BobberScene extends Scene {
       checkpoints.forEach((cp) => {
         this.makeBuoyComposite(cp.x, cp.y)
       })
+      
 
       const skeletonWalk = this.physics.add.sprite(50, 100, 'skeletonWalk')
       skeletonWalk.setImmovable(true)

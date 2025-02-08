@@ -3,7 +3,7 @@ import { Game, Scene, WEBGL } from 'phaser'
 import { PlatformerTestScene } from './games/platformerTest'
 import { BobberScene, IPlayer } from './games/bobber/bobber'
 import { BobberInputScene, InputScene } from './games/bobber/inputScene'
-
+import {  getPeersAsync, joinPeerServer } from './packages/multiplayer/multiplayer'
 
 interface IMenuItemSeed {
   id?: string
@@ -193,6 +193,12 @@ class MenuScene extends Scene implements IMenuScene {
         this.toggleToMenu(this.settingsMenu)
       },
     },
+    {
+      text: 'Try to connect peer',
+      action: () => {
+        connectAndTalk(window.remotePeerId)
+      },
+    },
   ]
 
   settingsMenuSeed: IMenuScene['settingsMenuSeed'] = [
@@ -358,7 +364,7 @@ const config: Phaser.Types.Core.GameConfig = {
     ['menu', MenuScene],
     ['platformertest', PlatformerTestScene],
     ['bobber', BobberScene],
-    ['bobberInput', BobberInputScene]
+    ['bobberInput', BobberInputScene],
   ]),
   pixelArt: true,
   scale: {
@@ -368,8 +374,11 @@ const config: Phaser.Types.Core.GameConfig = {
     height: GAME_HEIGHT,
   },
   input: {
-    activePointers: 3
-  }
+    activePointers: 3,
+  },
+  dom: {
+    createContainer: true,
+  },
 }
 
 const game = new Game(config)
@@ -439,3 +448,8 @@ if (import.meta.hot) {
     game.destroy(false)
   })
 }
+
+// Testing
+getPeersAsync()
+joinPeerServer()
+
