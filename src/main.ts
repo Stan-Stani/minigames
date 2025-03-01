@@ -3,6 +3,7 @@ import { Game, Scene, WEBGL } from 'phaser'
 import { PlatformerTestScene } from './games/platformerTest'
 import { BobberScene, IPlayer } from './games/bobber/bobber'
 import { BobberInputScene, InputScene } from './games/bobber/inputScene'
+import { HanjaScene } from './games/hanja/hanja'
 
 
 interface IMenuItemSeed {
@@ -141,14 +142,19 @@ function loadFont(family: string, url: string) {
 }
 // https://www.dafont.com/early-gameboy.font
 loadFont('gameboy', './Early GameBoy.ttf')
+loadFont('lanapixel', './fonts/LanaPixel.ttf')
+
 
 const SCREEN_CENTER = [WIDTH / 2, GAME_HEIGHT / 2]
-const FONT_SIZE = 16
+const FONT_SIZE = 33
 const LINE_HEIGHT = 21
 const FONT_OPTIONS = {
   fontSize: `${FONT_SIZE}px`,
   fill: '#FFF',
-  fontStyle: 'bold',
+  color: '#FFF',
+  fontFamily: 'lanapixel',
+  resolutions: 1,
+
 }
 type IBuiltMenu = Map<string, Phaser.GameObjects.Text>
 interface IMenuScene {
@@ -160,6 +166,8 @@ interface IMenuScene {
 }
 
 class MenuScene extends Scene implements IMenuScene {
+
+  
   toggleToScene = (sceneIndicator: Parameters<typeof this.scene.start>[0]) => {
     this.scene.stop()
     this.scene.start(sceneIndicator)
@@ -178,6 +186,13 @@ class MenuScene extends Scene implements IMenuScene {
       text: 'Bobber',
       action: () => {
         this.toggleToScene('BobberScene')
+      },
+    },
+    {
+      text: 'Hanja人',
+      action: () => {
+        this.scene.stop()
+        this.toggleToScene('HanjaScene')
       },
     },
     {
@@ -288,7 +303,7 @@ class MenuScene extends Scene implements IMenuScene {
       })()
 
       let text = this.add
-        .text(WIDTH / 10, yCoord, menuItem.text, FONT_OPTIONS)
+        .text(22, yCoord, menuItem.text, FONT_OPTIONS)
         // .setOrigin(0.5, 1)
         .setInteractive()
         .on('pointerover', () => {
@@ -317,6 +332,7 @@ class MenuScene extends Scene implements IMenuScene {
   create() {
     this.mainMenu = this.setUpMenu(this.mainMenuSeed, true)
     this.settingsMenu = this.setUpMenu(this.settingsMenuSeed, false)
+
   }
 }
 
@@ -356,6 +372,7 @@ const config: Phaser.Types.Core.GameConfig = {
   },
   scene: getSceneToLoadFromURL([
     ['menu', MenuScene],
+    ['hanja', HanjaScene],
     ['platformertest', PlatformerTestScene],
     ['bobber', BobberScene],
     ['bobberInput', BobberInputScene]
