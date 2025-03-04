@@ -3,7 +3,14 @@ import { Game, Scene, WEBGL } from 'phaser'
 import { PlatformerTestScene } from './games/platformerTest'
 import { BobberScene, IPlayer } from './games/bobber/bobber'
 import { BobberInputScene, InputScene } from './games/bobber/inputScene'
-import {  getPeersAsync, joinPeerServer } from './packages/multiplayer/multiplayer'
+
+import Peer, { DataConnection } from 'peerjs'
+import {
+  connectToPeer,
+  getPeerIdsAsync,
+  registerWithPeerServerAsync,
+  talk,
+} from './packages/multiplayer/multiplayer'
 
 interface IMenuItemSeed {
   id?: string
@@ -159,6 +166,7 @@ interface IMenuScene {
   settingsMenu: IBuiltMenu
 }
 
+let conns: DataConnection[] = []
 class MenuScene extends Scene implements IMenuScene {
   toggleToScene = (sceneIndicator: Parameters<typeof this.scene.start>[0]) => {
     this.scene.stop()
@@ -173,6 +181,7 @@ class MenuScene extends Scene implements IMenuScene {
       text.setVisible(true)
     })
   }
+
   mainMenuSeed: IMenuScene['mainMenuSeed'] = [
     {
       text: 'Bobber',
@@ -194,9 +203,56 @@ class MenuScene extends Scene implements IMenuScene {
       },
     },
     {
-      text: 'Try to connect peer',
+      text: 'Connect to Peers',
+      action: async () => {
+        const peerIds = await getPeerIdsAsync()
+        const peerMe = await registerWithPeerServerAsync()
+        const peerIdsNotMe = peerIds.filter((id) => id !== peerMe.id)
+        peerIdsNotMe.forEach((id) => {
+          const connOut = peerMe.connect(id)
+          try {
+            connOut.on('open', () => {
+              console.log(`Connected to Peer: ${id}`)
+            })
+            connOut.on('data', (data) => {
+              console.log(`Peer ${id} says: ${data}`)
+            })
+          } catch (error) {
+            console.error(error)
+          }
+          conns.push(connOut)
+
+        
+        })
+        peerMe.on('connection', (connIn) => {
+          console.log('A peer connected.')
+          connIn.on('data', function (data) {
+            console.log('Received', data)
+          })
+          conns.push(connIn)
+        })
+      },
+    },
+    // {
+    //   text: 'List peers',
+    //   action: () => {
+    //     getPeerIdsAsync ? getPeerIdsAsync() : undefined
+    //   },
+    // },
+    // {
+    //   text: 'Connect to Peers',
+    //   action: () => {
+    //     conn = peerMe ? connectToPeer(peerMe) : undefined
+    //   },
+    // },
+    {
+      text: 'Talk to Peers',
       action: () => {
-        connectAndTalk(window.remotePeerId)
+        console.log(conns)
+        conns.forEach((conn) => {
+          console.log(conn)
+          return talk(conn)
+        })
       },
     },
   ]
@@ -449,7 +505,6 @@ if (import.meta.hot) {
   })
 }
 
-// Testing
-getPeersAsync()
-joinPeerServer()
-
+// // Testing
+// getPeersAsync()
+// joinPeerServer()
