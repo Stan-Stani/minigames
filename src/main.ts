@@ -8,8 +8,9 @@ import Peer, { DataConnection } from 'peerjs'
 import {
   connectToPeer,
   getPeerIdsAsync,
+  PeerGroup,
   registerWithPeerServerAsync,
-  talk,
+  talkToPeers,
 } from './packages/multiplayer/multiplayer'
 
 interface IMenuItemSeed {
@@ -166,8 +167,9 @@ interface IMenuScene {
   settingsMenu: IBuiltMenu
 }
 
-let conns: DataConnection[] = []
 class MenuScene extends Scene implements IMenuScene {
+  peerGroup = new PeerGroup()
+
   toggleToScene = (sceneIndicator: Parameters<typeof this.scene.start>[0]) => {
     this.scene.stop()
     this.scene.start(sceneIndicator)
@@ -205,32 +207,7 @@ class MenuScene extends Scene implements IMenuScene {
     {
       text: 'Connect to Peers',
       action: async () => {
-        const peerIds = await getPeerIdsAsync()
-        const peerMe = await registerWithPeerServerAsync()
-        const peerIdsNotMe = peerIds.filter((id) => id !== peerMe.id)
-        peerIdsNotMe.forEach((id) => {
-          const connOut = peerMe.connect(id)
-          try {
-            connOut.on('open', () => {
-              console.log(`Connected to Peer: ${id}`)
-            })
-            connOut.on('data', (data) => {
-              console.log(`Peer ${id} says: ${data}`)
-            })
-          } catch (error) {
-            console.error(error)
-          }
-          conns.push(connOut)
-
-        
-        })
-        peerMe.on('connection', (connIn) => {
-          console.log('A peer connected.')
-          connIn.on('data', function (data) {
-            console.log('Received', data)
-          })
-          conns.push(connIn)
-        })
+        ;(await this.peerGroup.registerWithPeerServerAsync()).openConnectionsAsync()
       },
     },
     // {
@@ -248,11 +225,7 @@ class MenuScene extends Scene implements IMenuScene {
     {
       text: 'Talk to Peers',
       action: () => {
-        console.log(conns)
-        conns.forEach((conn) => {
-          console.log(conn)
-          return talk(conn)
-        })
+        this.peerGroup.announce('heyo')
       },
     },
   ]
@@ -377,6 +350,7 @@ class MenuScene extends Scene implements IMenuScene {
     return builtMenu
   }
   create() {
+    this.registry.set({ peerGroup: this.peerGroup })
     this.mainMenu = this.setUpMenu(this.mainMenuSeed, true)
     this.settingsMenu = this.setUpMenu(this.settingsMenuSeed, false)
   }

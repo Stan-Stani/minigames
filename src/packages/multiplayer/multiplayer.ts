@@ -1,93 +1,78 @@
-// import { Peer } from 'peerjs'
-
-// export async function joinPeerServer() {
-//   const peer = new Peer({ host: '127.0.0.1', port: 41361, path: '/' })
-//   let idLocal = ''
-//   peer.on('open', function (id) {
-//     console.log('My peer ID is: ' + id)
-//     idLocal = id
-//     //   const otherPeerClientId = window.prompt('Please enter a peer id...')
-//   })
-
-//   peer.on('connection', (connWeReceived) => {
-//     console.log('connection FROM remote peer')
-//     connWeReceived.on('data', function (data) {
-//       console.log('Received', data)
-//     })
-
-//     connWeReceived.on('open', () => {
-//       connWeReceived.send(`Hello from what you connected to  ${idLocal}`)
-//       window.send = (message: any) => connWeReceived.send(message)
-//     })
-//   })
-
-//   // function connectAndTalk(id: string) {
-//   //   const otherPeerClientId = id
-
-//   //   if (otherPeerClientId) {
-//   //     const connWeInitiated = peer.connect(otherPeerClientId)
-//   //     connWeInitiated.on('data', function (data) {
-//   //       console.log('Received', data)
-//   //     })
-//   //     window.send = (message: any) => connWeInitiated.send(message)
-//   //   } else {
-//   //     throw new Error("Peer id can't be empty")
-//   //   }
-//   // }
-// }
-
-// // export { peer, connectAndTalk }
-
 import Peer, { DataConnection } from 'peerjs'
 
-export async function getPeerIdsAsync() {
-  const res = await fetch('http://127.0.0.1:41362')
+export class PeerGroup {
+  peerMe: Peer | undefined
+  connections: DataConnection[] = []
 
-  const parsedObject = (await res.json()) as { currentClientIds: string[] }
+  constructor() {}
 
-  return parsedObject.currentClientIds
-}
+  /** Returned promise resolves with the same peerGroup after
+   *  peerMe connects to the Peer Server */
+  registerWithPeerServerAsync(this: PeerGroup) {
+    this.peerMe = new Peer({
+      host: '127.0.0.1',
+      port: 41361,
+      path: '/',
+    })
 
-export function registerWithPeerServerAsync() {
-  const peerMe = new Peer({
-    host: '127.0.0.1',
-    port: 41361,
-    path: '/',
-  })
-
-  const peerPromise = new Promise<Peer>((resolve, reject) => {
-    try {
-      peerMe.on('open', (id) => {
-        console.log('My Peer ID is: ' + id)
-        resolve(peerMe)
+    this.peerMe.on('connection', (connIn) => {
+      this.connections.push(connIn)
+      console.log(`Peer (${connIn.peer}) connected.`)
+      connIn.on('data', function (data) {
+        console.log(`Peer (${connIn.peer}) sent: `, data)
       })
-    } catch (error) {
-      reject(error)
+    })
+
+    const peerGroupPromise = new Promise<typeof this>((resolve, reject) => {
+      try {
+        this.peerMe?.on('open', (id) => {
+          console.log('My Peer ID is: ' + id)
+          resolve(this)
+        })
+      } catch (error) {
+        reject(error)
+      }
+    })
+
+    return peerGroupPromise
+  }
+
+  /** Connect to all peers currently registered on the Peer Server.
+   * @returns `Promise<PeerGroup>` resolving to the same peer group.
+   */
+  openConnectionsAsync(this: PeerGroup) {
+    if (!this.peerMe) {
+      throw new Error(`this.peerMe is ${this.peerMe}.`)
     }
-  })
+    let peerIdsNotMe: string[] = []
 
+    const peerGroupPromise = new Promise<PeerGroup>(
+      (resolve, reject) =>
+        this.peerMe?.listAllPeers((peerIds) => {
+          peerIdsNotMe = peerIds.filter((id) => id !== this.peerMe?.id)
+          peerIdsNotMe.forEach((id) => {
+            const connOut = this.peerMe?.connect(id)
+            connOut && this.connections.push(connOut)
+            try {
+              connOut?.on('open', () => {
+                console.log(`Connected to Peer (${id}).`)
+              })
+              connOut?.on('data', (data) => {
+                console.log(`Peer (${id}) sent `, data)
+              })
+            } catch (error) {
+              console.error(error)
+              reject(error)
+            }
+          })
+          resolve(this)
+        })
+    )
 
+    return peerGroupPromise
+  }
 
-  return peerPromise
-}
-
-export function connectToPeer(peerMe: Peer) {
-  const targetPeerInput = document.getElementById(
-    'targetPeer'
-  ) as HTMLInputElement
-  const conn = peerMe.connect(targetPeerInput.value)
-  conn.on('open', function () {
-    console.log('connection opened to peer')
-    // Receive messages
-  })
-
-  conn.on('data', function (data) {
-    console.log('Received', data)
-  })
-
-  return conn
-}
-
-export function talk(conn: DataConnection) {
-  conn.send('Hello!' + crypto.randomUUID())
+  announce<T>(data: T) {
+    this.connections.forEach((conn) => conn.send(data))
+  }
 }

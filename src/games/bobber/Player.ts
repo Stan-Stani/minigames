@@ -33,17 +33,23 @@ export interface Player
 export class Player extends Phaser.Physics.Arcade.Sprite {
   declare body: Phaser.Physics.Arcade.Body
 
-  constructor(scene: BobberScene) {
+  constructor(scene: BobberScene, isPeer: boolean) {
     if (!scene.initialSpawn) {
       throw new Error('initialSpawn is falsy')
     }
     super(scene, scene.initialSpawn.x, scene.initialSpawn.y, 'player')
     scene.add.existing(this)
+
     scene.physics.add.existing(this)
 
     this.body.setSize(10, 14).setOffset(this.body.offset.x, 3)
 
     this.body.setBounce(0.3)
+    if (isPeer) {
+      this.body.setAllowGravity(false)
+      this.setDepth(-2)
+      return
+    }
     this.brakingInfo = {
       isBraking: false,
       directionBeforeBraking: undefined,
@@ -60,8 +66,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.isImmersed = false
     this.isDoneBobbing = false
     this.setDepth(-1)
-    this.teleportDestination = BobberScene.teleportCheat.slice(1) as [number, number]
-    scene.cameras.main.startFollow(this, true)
+    this.teleportDestination = BobberScene.teleportCheat.slice(1) as [
+      number,
+      number,
+    ]
+    if (!isPeer) {
+      scene.cameras.main.startFollow(this, true)
+    }
     this.respawn = (dest) => {
       this.setPosition(...(dest ?? this.teleportDestination ?? [0, 0]))
         .setVelocity(0, 0)

@@ -6,6 +6,7 @@ import {
   toastMessage,
 } from '../../debugging/tools'
 import { Player } from './Player'
+import { PeerGroup } from '../../packages/multiplayer/multiplayer'
 const WIDTH = 256
 const HEIGHT = 240
 const GRAVITY = 128
@@ -21,10 +22,11 @@ export class BobberScene extends Scene {
   }
   static teleportCheat: [boolean, number, number] = [false, 0, 0]
   static HAS_LOCAL_STORAGE = false
-
+  peerGroup: PeerGroup | undefined = undefined
   inspectorScene: any
   #timerText?: GameObjects.Text
   playerOne?: Player
+  playerTwo?: Player
   // @ts-ignore
   #generatedPlatforms: (Phaser.GameObjects.Image & {
     body: Phaser.Physics.Arcade.StaticBody
@@ -155,6 +157,20 @@ export class BobberScene extends Scene {
   }
 
   create() {
+    this.peerGroup = this.registry.get('peerGroup')
+    this.peerGroup?.connections[0]?.on('data', (data) => {
+      this.playerTwo?.setX(data?.x)
+      this.playerTwo?.setY(data?.y)
+    })
+   this.time.addEvent({
+      delay: 1000,
+      callback: () =>
+        this.peerGroup?.announce({
+          x: this.playerOne?.x,
+          y: this.playerOne?.y,
+        }),
+      loop: true,
+    })
     this.scene.launch('BobberInputScene')
     this.#timerText = this.add.text(WIDTH * 0.8, HEIGHT * 0.05, '00', {
       fontSize: `10px`,
@@ -192,7 +208,8 @@ export class BobberScene extends Scene {
     if (playerSpawn && tileset) {
       this.initialSpawn = playerSpawn
       // this.initialSpawn = {x: 158 * 16, y: 7 * 16}
-      this.playerOne = new Player(this)
+      this.playerOne = new Player(this, false)
+      this.playerTwo = new Player(this, true)
 
       if (!this.initialSpawn) throw new Error()
 
@@ -205,21 +222,20 @@ export class BobberScene extends Scene {
       checkpoints.forEach((cp) => {
         this.makeBuoyComposite(cp.x, cp.y)
       })
-      
 
       const skeletonWalk = this.physics.add.sprite(50, 100, 'skeletonWalk')
       skeletonWalk.setImmovable(true)
-  
+
       skeletonWalk.body.setAllowGravity(false)
       skeletonWalk.setDepth(-2)
-      
+
       const thisanim = this.anims.createFromAseprite(
         'skeletonWalk',
         undefined,
         skeletonWalk
       )
-    skeletonWalk.play({ key: 'default', repeat: -1})
-     console.log(thisanim)
+      skeletonWalk.play({ key: 'default', repeat: -1 })
+      console.log(thisanim)
 
       if (!this.#kill) {
         throw new Error(`kill is ${this.#kill} but cannot be falsy`)
