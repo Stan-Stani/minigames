@@ -1,11 +1,22 @@
 import { Scene } from 'phaser'
 import BobberScene from './bobber'
 import { stickyMessage } from '../../debugging/tools'
+import Peer, { DataConnection } from 'peerjs'
+import { PeerGroup } from '../../packages/multiplayer/multiplayer'
 
 export interface PlayerLike extends Player {}
+interface PeerConfig {
+  peerGroup?: PeerGroup
+  /** The player's remote peer connection.
+   * @note If defined, then this is a network player. If not,
+   * then this is a client player.
+   */
+  myPeerPlayerConn?: DataConnection
+}
 
 export interface Player
   extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
+  peerConfig?: PeerConfig
   scene: BobberScene
   brakingInfo: {
     isBraking: boolean
@@ -33,11 +44,16 @@ export interface Player
 export class Player extends Phaser.Physics.Arcade.Sprite {
   declare body: Phaser.Physics.Arcade.Body
 
-  constructor(scene: BobberScene, isPeer: boolean) {
+  constructor(
+    scene: BobberScene,
+    peerConfig?: { peerGroup?: PeerGroup; myPeerPlayerConn?: DataConnection }
+  ) {
     if (!scene.initialSpawn) {
       throw new Error('initialSpawn is falsy')
     }
     super(scene, scene.initialSpawn.x, scene.initialSpawn.y, 'player')
+    this.peerConfig = peerConfig
+
     scene.add.existing(this)
 
     scene.physics.add.existing(this)
@@ -45,10 +61,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.body.setSize(10, 14).setOffset(this.body.offset.x, 3)
 
     this.body.setBounce(0.3)
-    if (isPeer) {
-      this.body.setAllowGravity(false)
+    if (this.peerConfig?.myPeerPlayerConn) {
+      // this.body.setAllowGravity(false)
       this.setDepth(-2)
-      return
+      // this.meAndPeerGroup.connMe.on('data', (data) => {
+      //   this.setX(data?.x)
+      //   this.setY(data?.y)
+      // })
     }
     this.brakingInfo = {
       isBraking: false,
@@ -70,7 +89,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       number,
       number,
     ]
-    if (!isPeer) {
+    if (!this.peerConfig?.myPeerPlayerConn) {
       scene.cameras.main.startFollow(this, true)
     }
     this.respawn = (dest) => {
@@ -84,6 +103,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.respawnedPreviousFrame = true
     }
     this.respawnedPreviousFrame = false
+
+    if (this.peerConfig?.myPeerPlayerConn) {
+      const myPeerPlayerConn = this.peerConfig?.myPeerPlayerConn
+      myPeerPlayerConn.on('data', (data) => {
+        if (data.right) {
+          this.rightButtonDown()
+        } else if (!data.right) {
+          this.rightButtonUp()
+        }
+      })
+    }
   }
 
   // Using arrow functions to prevent Phaser from
@@ -93,18 +123,23 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       console.log('Lalonde', 'imm')
       this.setVelocityY(100)
       this.keyInfo.down = true
+      if (!this.peerConfig?.myPeerPlayerConn) {
+        this.peerConfig?.peerGroup?.announce(this.keyInfo)
+      }
     }
   }
 
   diveButtonUp = () => {
     this.keyInfo.down = false
-    console.log('Lalonde', 'diveButtonUp')
   }
 
   rightButtonDown = () => {
     this.keyInfo.right = true
     this.setHorizontalAcceleration('right')
     this.isRunning = true
+    if (!this.peerConfig?.myPeerPlayerConn) {
+      this.peerConfig?.peerGroup?.announce(this.keyInfo)
+    }
   }
 
   rightButtonUp = () => {
@@ -120,6 +155,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
     this.isRunning = false
+    if (!this.peerConfig?.myPeerPlayerConn) {
+      this.peerConfig?.peerGroup?.announce(this.keyInfo)
+    }
   }
 
   leftButtonDown = () => {
@@ -197,6 +235,42 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.setAccelerationX(baseAcceleration * 2)
     } else if (!this.isOnGround) {
       this.setAccelerationX(baseAcceleration / 2)
+    }
+  }
+
+  managePlatformCollisions() {
+    const playerBody = this.body as Phaser.Physics.Arcade.Body
+
+    playerBody.onCollide = true
+    if (this.scene.platforms) {
+      this.scene.physics.add.collider(this, this.scene.platforms, () => {
+        console.log('block')
+        // if (!this.scene.isOnGround && this.playerOne?.body?.blocked.down) {
+        //   dustCollision(
+        //     [
+        //       this.playerOne?.x! - this.playerOne?.width! / 2,
+        //       this.playerOne?.x! + this.playerOne?.width! / 2,
+        //     ],
+        //     [
+        //       this.playerOne?.y! + this.playerOne?.height! / 2,
+        //       this.playerOne?.y! + this.playerOne?.height! / 2,
+        //     ]
+        //   )
+        //   this.playerOne?.setDrag(0.2, 0)
+        // }
+
+        // The sprite hit the bottom side of the world bounds
+        // this.isOnGround = true
+        // // @todo Is the below even necessary?
+        // // @todo Logic for reinstating movement if a left or right key is held down
+        // if (this.playerOne?.keyInfo.right) {
+        //   this.playerOne.setHorizontalAcceleration('right')
+        // } else if (this.playerOne?.keyInfo.left) {
+        //   this.playerOne.setHorizontalAcceleration('left')
+        // }
+
+        // down && onHitBottom(playerBody.gameObject)
+      })
     }
   }
 

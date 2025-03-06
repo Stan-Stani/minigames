@@ -7,6 +7,7 @@ import {
 } from '../../debugging/tools'
 import { Player } from './Player'
 import { PeerGroup } from '../../packages/multiplayer/multiplayer'
+import { ConnectionType } from 'peerjs'
 const WIDTH = 256
 const HEIGHT = 240
 const GRAVITY = 128
@@ -26,12 +27,12 @@ export class BobberScene extends Scene {
   inspectorScene: any
   #timerText?: GameObjects.Text
   playerOne?: Player
-  playerTwo?: Player
+  peerPlayerArr?: Player[] = []
   // @ts-ignore
   #generatedPlatforms: (Phaser.GameObjects.Image & {
     body: Phaser.Physics.Arcade.StaticBody
   })[] = []
-  #platforms?: Phaser.Tilemaps.TilemapLayer
+  platforms?: Phaser.Tilemaps.TilemapLayer
   #water?: Phaser.Tilemaps.TilemapLayer
   #kill?: Phaser.Tilemaps.TilemapLayer | null
   initialSpawn?: spawnLocation
@@ -40,7 +41,7 @@ export class BobberScene extends Scene {
   teleportDestination = BobberScene.teleportCheat?.slice(1) as [number, number]
 
   makeBuoyComposite(x: number, y: number) {
-    if (!this.#platforms) {
+    if (!this.platforms) {
       throw new Error('#Platforms is falsy')
     }
     if (!this.playerOne) {
@@ -72,7 +73,7 @@ export class BobberScene extends Scene {
       activationParticles
     )
 
-    this.physics.add.collider(buoy, this.#platforms)
+    this.physics.add.collider(buoy, this.platforms)
 
     const overlap = this.physics.add.overlap(buoy, this.playerOne, () => {
       if (!this.playerOne) {
@@ -158,19 +159,6 @@ export class BobberScene extends Scene {
 
   create() {
     this.peerGroup = this.registry.get('peerGroup')
-    this.peerGroup?.connections[0]?.on('data', (data) => {
-      this.playerTwo?.setX(data?.x)
-      this.playerTwo?.setY(data?.y)
-    })
-   this.time.addEvent({
-      delay: 1000,
-      callback: () =>
-        this.peerGroup?.announce({
-          x: this.playerOne?.x,
-          y: this.playerOne?.y,
-        }),
-      loop: true,
-    })
     this.scene.launch('BobberInputScene')
     this.#timerText = this.add.text(WIDTH * 0.8, HEIGHT * 0.05, '00', {
       fontSize: `10px`,
@@ -208,16 +196,26 @@ export class BobberScene extends Scene {
     if (playerSpawn && tileset) {
       this.initialSpawn = playerSpawn
       // this.initialSpawn = {x: 158 * 16, y: 7 * 16}
-      this.playerOne = new Player(this, false)
-      this.playerTwo = new Player(this, true)
+      this.playerOne = new Player(this, { peerGroup: this.peerGroup })
 
       if (!this.initialSpawn) throw new Error()
 
       this.#water = map.createLayer('water', tileset)!
       this.#water!.setCollisionByExclusion([-1], true)
-      this.#platforms = map.createLayer('platforms', tileset)!
-      this.#platforms!.setCollisionByExclusion([-1], true)
+      this.platforms = map.createLayer('platforms', tileset)!
+      this.platforms!.setCollisionByExclusion([-1], true)
       this.#kill = map.createLayer('kill', tileset)
+
+      this.peerGroup?.connections.forEach((conn) => {
+        const peerPlayer = new Player(this, {
+          peerGroup: this.peerGroup,
+          myPeerPlayerConn: conn,
+        })
+
+        this.peerPlayerArr?.push(peerPlayer)
+
+        peerPlayer.managePlatformCollisions()
+      })
 
       checkpoints.forEach((cp) => {
         this.makeBuoyComposite(cp.x, cp.y)
@@ -297,7 +295,7 @@ export class BobberScene extends Scene {
           Phaser.Math.Between(-20, 20)
         )
 
-        this.physics.add.collider(pixel, this.#platforms!)
+        this.physics.add.collider(pixel, this.platforms!)
         this.physics.add.collider(pixel, this.#kill!)
 
         this.time.delayedCall(
@@ -398,8 +396,8 @@ export class BobberScene extends Scene {
     const playerBody = this.playerOne.body as Phaser.Physics.Arcade.Body
 
     playerBody.onCollide = true
-    if (this.#platforms) {
-      this.physics.add.collider(this.playerOne, this.#platforms, () => {
+    if (this.platforms) {
+      this.physics.add.collider(this.playerOne, this.platforms, () => {
         if (!this.isOnGround && this.playerOne?.body?.blocked.down) {
           dustCollision(
             [
@@ -438,7 +436,6 @@ export class BobberScene extends Scene {
     }`
     this.#timerText?.setText(timeString)
     this.#timerText?.setScrollFactor(0)
-    console.log(this.cameras.main.getBounds().x)
     stickyMessage(
       'playerOne Net Gravity:',
       (this.playerOne?.body.gravity.y ?? 0) + GRAVITY
