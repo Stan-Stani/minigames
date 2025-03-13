@@ -237,46 +237,6 @@ export class BobberScene extends Scene {
 
     // this.cameras.main.setDeadzone(400, 200);
 
-    const dustCollision = (
-      [minX, maxX]: [number, number],
-      [minY, maxY]: [number, number]
-    ) => {
-      for (let i = 0; i < 10; i++) {
-        // Create a physics sprite using the 'pixel' texture at random positions
-        let x = Phaser.Math.Between(minX, maxX)
-        let y = Phaser.Math.Between(minY, maxY)
-        let pixel = this.physics.add.sprite(x, y, 'pixel')
-        pixel.setGravityY(-GRAVITY + 60)
-
-        // Set properties on the physics body, if desired
-        //   pixel.body.setCollideWorldBounds(true)
-        pixel.body.setBounce(0.5)
-        pixel.body.setVelocity(
-          Phaser.Math.Between(-20, 20),
-          Phaser.Math.Between(-20, 20)
-        )
-
-        this.physics.add.collider(pixel, this.platforms!)
-        this.physics.add.collider(pixel, this.kill!)
-
-        this.time.delayedCall(
-          5000,
-          () => {
-            this.tweens.add({
-              targets: pixel,
-              alpha: { from: 1, to: 0 },
-              duration: 500,
-              onComplete: () => {
-                pixel.destroy()
-              },
-            })
-          },
-          [],
-          this
-        )
-      }
-    }
-
     const handleInputs = () => {
       try {
         if (!this.input.keyboard) {

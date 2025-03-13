@@ -43,7 +43,32 @@ export interface Player
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   declare body: Phaser.Physics.Arcade.Body
-
+  static #tints: { available: number[]; used: number[] } = {
+    available: [
+      0xff5733, // Bright red-orange
+      0x33ff57, // Bright green
+      0x3357ff, // Bright blue
+      0xf3ff33, // Bright yellow
+      0xf033ff, // Bright magenta
+      0x33fff3, // Bright cyan
+      0x8033ff, // Purple
+      0xff338a, // Pink
+      0xff9933, // Orange
+      0x99ff33, // Lime
+      0x33ff99, // Mint
+      0x3399ff, // Sky blue
+      0x9933ff, // Violet
+      0xffd433, // Gold
+      0x33ffd4, // Turquoise
+      0xd433ff, // Lavender
+      0xff3333, // Red
+      0x33ff33, // Green
+      0x6b33ff, // Indigo
+      0xff33d4, // Hot pink
+    ],
+    used: [],
+  }
+  myTint: number | undefined = undefined
   constructor(
     scene: BobberScene,
     peerConfig?: { peerGroup?: PeerGroup; myPeerPlayerConn?: DataConnection }
@@ -55,6 +80,27 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.peerConfig = peerConfig
 
     scene.add.existing(this)
+
+    if (this.peerConfig?.myPeerPlayerConn) {
+      const myTintIndex = Math.floor(
+        Math.random() * Player.#tints.available.length
+      )
+      if (myTintIndex !== -1) {
+        this.myTint = Player.#tints.available.splice(myTintIndex, 1)[0]
+
+        Player.#tints.used.push(this.myTint)
+        this.setTint(this.myTint)
+      } else {
+        Player.#tints.available = [...Player.#tints.used]
+        Player.#tints.used = []
+        const myTintIndex = Math.floor(
+          Math.random() * Player.#tints.available.length
+        )
+        this.myTint = Player.#tints.available.splice(myTintIndex, 1)[0]
+        Player.#tints.used.push(this.myTint)
+        this.setTint(this.myTint)
+      }
+    }
 
     scene.physics.add.existing(this)
 
@@ -136,6 +182,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         let x = Phaser.Math.Between(minX, maxX)
         let y = Phaser.Math.Between(minY, maxY)
         let pixel = this.scene.physics.add.sprite(x, y, 'pixel')
+        pixel.setTint(this.myTint)
         pixel.setGravityY(-this.scene.GRAVITY + 60)
 
         // Set properties on the physics body, if desired
