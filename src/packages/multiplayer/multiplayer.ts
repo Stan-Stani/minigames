@@ -10,7 +10,7 @@ export class PeerGroup {
    *  peerMe connects to the Peer Server */
   registerWithPeerServerAsync(this: PeerGroup) {
     this.peerMe = new Peer({
-      host: '127.0.0.1',
+      host: '192.168.86.138',
       port: 41361,
       path: '/',
     })

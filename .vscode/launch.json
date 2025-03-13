@@ -18,7 +18,7 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "yarn",
-      "runtimeArgs": ["dev"],
+      "runtimeArgs": ["dev", "--host"],
       "timeout": 30000,
       "console": "integratedTerminal"
     }

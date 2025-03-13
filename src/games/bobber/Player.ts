@@ -114,6 +114,72 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
       })
     }
+
+    const dustCollision = (
+      [minX, maxX]: [number, number],
+      [minY, maxY]: [number, number]
+    ) => {
+      for (let i = 0; i < 10; i++) {
+        // Create a physics sprite using the 'pixel' texture at random positions
+        let x = Phaser.Math.Between(minX, maxX)
+        let y = Phaser.Math.Between(minY, maxY)
+        let pixel = this.scene.physics.add.sprite(x, y, 'pixel')
+        pixel.setGravityY(-this.scene.GRAVITY + 60)
+
+        // Set properties on the physics body, if desired
+        //   pixel.body.setCollideWorldBounds(true)
+        pixel.body.setBounce(0.5)
+        pixel.body.setVelocity(
+          Phaser.Math.Between(-20, 20),
+          Phaser.Math.Between(-20, 20)
+        )
+
+        this.scene.physics.add.collider(pixel, this.scene.platforms!)
+        this.scene.physics.add.collider(pixel, this.scene.kill!)
+
+        this.scene.time.delayedCall(
+          5000,
+          () => {
+            this.scene.tweens.add({
+              targets: pixel,
+              alpha: { from: 1, to: 0 },
+              duration: 500,
+              onComplete: () => {
+                pixel.destroy()
+              },
+            })
+          },
+          [],
+          this
+        )
+      }
+    }
+    const managePlatformCollisions = () => {
+      const playerBody = this.body as Phaser.Physics.Arcade.Body
+      playerBody.onCollide = true
+      if (this.scene.platforms) {
+        this.scene.physics.add.collider(this, this.scene.platforms, () => {
+          if (!this.isOnGround && playerBody?.blocked.down) {
+            dustCollision(
+              [this.x! - this.width! / 2, this.x! + this.width! / 2],
+              [this.y! + this.height! / 2, this.y! + this.height! / 2]
+            )
+            this.setDrag(0.2, 0)
+          }
+
+          this.isOnGround = true
+          // @todo Is the below even necessary?
+          // @todo Logic for reinstating movement if a left or right key is held down
+          if (this.keyInfo.right) {
+            this.setHorizontalAcceleration('right')
+          } else if (this.keyInfo.left) {
+            this.setHorizontalAcceleration('left')
+          }
+        })
+      }
+    }
+
+    managePlatformCollisions()
   }
 
   // Using arrow functions to prevent Phaser from
@@ -212,12 +278,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       baseAcceleration = -30
       conditionalResultToUse = (this.body.velocity?.x ?? 0) <= 0
       directionBeforeBraking = 'right'
-      // this.playerOne?.setFlipX(true)
+      // this.setFlipX(true)
     } else if (direction === 'right') {
       baseAcceleration = 30
       conditionalResultToUse = (this.body.velocity?.x ?? 0) >= 0
       directionBeforeBraking = 'left'
-      // this.playerOne?.setFlipX(false)
+      // this.setFlipX(false)
     } else {
       return
     }
@@ -238,42 +304,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  managePlatformCollisions() {
-    const playerBody = this.body as Phaser.Physics.Arcade.Body
-
-    playerBody.onCollide = true
-    if (this.scene.platforms) {
-      this.scene.physics.add.collider(this, this.scene.platforms, () => {
-        console.log('block')
-        // if (!this.scene.isOnGround && this.playerOne?.body?.blocked.down) {
-        //   dustCollision(
-        //     [
-        //       this.playerOne?.x! - this.playerOne?.width! / 2,
-        //       this.playerOne?.x! + this.playerOne?.width! / 2,
-        //     ],
-        //     [
-        //       this.playerOne?.y! + this.playerOne?.height! / 2,
-        //       this.playerOne?.y! + this.playerOne?.height! / 2,
-        //     ]
-        //   )
-        //   this.playerOne?.setDrag(0.2, 0)
-        // }
-
-        // The sprite hit the bottom side of the world bounds
-        // this.isOnGround = true
-        // // @todo Is the below even necessary?
-        // // @todo Logic for reinstating movement if a left or right key is held down
-        // if (this.playerOne?.keyInfo.right) {
-        //   this.playerOne.setHorizontalAcceleration('right')
-        // } else if (this.playerOne?.keyInfo.left) {
-        //   this.playerOne.setHorizontalAcceleration('left')
-        // }
-
-        // down && onHitBottom(playerBody.gameObject)
-      })
-    }
-  }
-
   update(_time: number, delta: number) {
     if (this.keyInfo.right && this.body.acceleration.x > 0) {
       if (this.angle <= 30) {
@@ -291,5 +321,184 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.angle -= 0.03 * delta
       }
     }
+
+    if (!this.scene.initialSpawn) return
+
+    const nullIfOutsideLevel = this.scene.water?.getTileAtWorldXY(
+      this.body.x + this.body.width / 2,
+      this.body.y + this.body.height / 2,
+      true
+    )
+
+    if (nullIfOutsideLevel === null) {
+      if (!this.respawn) {
+        return
+      }
+      this.respawn(this.respawnDestination)
+    }
+
+    // Don't waste time calculating super small velocity endlessly for drag
+    if (
+      Math.abs(this.body?.velocity.x ?? 0) < 0.1 &&
+      this.body?.acceleration.x === 0
+    ) {
+      this.body.velocity.x = 0
+    }
+
+    // Transition from increased abs value of deceleration of braking (60) to running's acceleration (30)
+    if (this.brakingInfo.isBraking) {
+      if (
+        this.brakingInfo.directionBeforeBraking === 'right' &&
+        this.body.velocity.x < 0
+      ) {
+        this.body.setAccelerationX(-30)
+        this.brakingInfo = {
+          isBraking: false,
+          directionBeforeBraking: undefined,
+        }
+      }
+      if (
+        this.brakingInfo.directionBeforeBraking === 'left' &&
+        this.body.velocity.x > 0
+      ) {
+        this.body.setAccelerationX(30)
+        this.brakingInfo = {
+          isBraking: false,
+          directionBeforeBraking: undefined,
+        }
+      }
+    }
+
+    if (this.body) {
+      // if (!this.isRunning && this.playerOne?.body?.velocity.x) {
+      //   this.body.velocity.x *= Math.pow(friction, deltaInSeconds)
+
+      //   // Stop the sprite if the velocity is very low
+      //   if (Math.abs(this.body.velocity.x) < 0.1) {
+      //     this.body.velocity.x = 0
+      //   }
+      // }
+
+      const tile = this.scene.water?.getTileAtWorldXY(
+        this.body.x + this.body.width / 2,
+        this.body.y + this.body.height / 3
+      )
+      let wasImmersedPreviousFrame = this.isImmersed
+      if (tile?.index === 17 || tile?.index === 33) {
+        this.isImmersed = true
+      } else {
+        this.isImmersed = false
+      }
+      if (this.isImmersed !== wasImmersedPreviousFrame) {
+        const magnitudeReduction = 1
+        const playerVelocity = this.body.velocity.y
+        if (playerVelocity > 0) {
+          this.body.setVelocityY(playerVelocity - magnitudeReduction)
+        } else if (playerVelocity < 0) {
+          this.body.setVelocityY(playerVelocity + magnitudeReduction)
+        }
+      }
+      stickyMessage({ isImmersed: this.isImmersed })
+
+      if (!this.isDoneBobbing) {
+        if (this.isImmersed) {
+          this.setGravityY(-2 * this.scene.GRAVITY)
+        } else {
+          this.setGravityY(0)
+        }
+      }
+
+      if (
+        this.body.velocity.y < 10 &&
+        this.isImmersed &&
+        this.isImmersed !== wasImmersedPreviousFrame &&
+        !this.respawnedPreviousFrame
+      ) {
+        this.respawnedPreviousFrame = false
+        this.setGravityY(-this.scene.GRAVITY)
+        this.body.setVelocityY(0)
+        this.isDoneBobbing = true
+      }
+
+      if (this.isDoneBobbing && this.isImmersed) {
+        if (this.keyInfo.left || this.keyInfo.right) {
+          this.setVelocityY(-20)
+          this.isDoneBobbing = false
+        }
+        if (this.keyInfo.down) {
+          this.isDoneBobbing = false
+        }
+      }
+
+      if (this.scene.water) {
+        // If we're passing through the top layer of water
+        const tile = this.getTileAtBottomOfSprite(this, this.scene.water, 17)
+        stickyMessage(tile?.index + ' hey ')
+
+        if (tile) {
+          const percentOverlap = this.calculateVerticalOverlap(this, tile)
+
+          // this.setGravityY(-GRAVITY * (percentOverlap / 100))
+
+          stickyMessage(percentOverlap)
+        } else if (this.isImmersed) {
+          this.setGravityY(-2 * this.scene.GRAVITY)
+        }
+      }
+    }
+
+    if (!this.body.blocked.down) {
+      this.setDrag(0.75, 0)
+      this.isOnGround = false
+      if (this.keyInfo.right) {
+        this.setHorizontalAcceleration('right')
+      } else if (this.keyInfo.left) {
+        this.setHorizontalAcceleration('left')
+      }
+    }
+
+    if (this.peerConfig?.myPeerPlayerConn) {
+      console.log(this.isOnGround, this.body.blocked.down)
+    }
+  }
+
+  getTileAtBottomOfSprite(
+    sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody,
+    tileLayer: Phaser.Tilemaps.TilemapLayer,
+    tileIndex?: number
+  ): Phaser.Tilemaps.Tile | null {
+    let tile: Phaser.Tilemaps.Tile | null = tileLayer.getTileAtWorldXY(
+      sprite.body.x + sprite.body.halfWidth,
+      sprite.body.y + sprite.body.height
+    )
+    if (tile) {
+      if (tileIndex && tileIndex === tile?.index) {
+        return tile
+      } else if (!tileIndex) {
+        return tile
+      }
+    }
+    return null
+  }
+
+  calculateVerticalOverlap(
+    sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody,
+    tile: Phaser.Tilemaps.Tile
+  ) {
+    let spriteBounds = sprite.getBounds()
+    let tileBounds = tile.getBounds()
+
+    // Determine the overlapping rectangle
+    let intersection = Phaser.Geom.Rectangle.Intersection(
+      spriteBounds,
+      tileBounds as Phaser.Geom.Rectangle
+    )
+
+    // Calculate the percentage of overlap
+    let overlapHeight = intersection.height
+    let spriteHeight = spriteBounds.height
+    let overlapPercentage = (overlapHeight / spriteHeight) * 100
+
+    return overlapPercentage
   }
 }
