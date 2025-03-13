@@ -15,8 +15,8 @@ export class BobberInputScene extends Scene {
       'pointerdown',
       () => BobberScene.playerOne?.leftButtonDown()
     )
-    LeftMobileInput.on('pointerup', () => BobberScene.playerOne?.leftButonUp())
-    LeftMobileInput.on('pointerout', () => BobberScene.playerOne?.leftButonUp())
+    LeftMobileInput.on('pointerup', () => BobberScene.playerOne?.leftButtonUp())
+    LeftMobileInput.on('pointerout', () => BobberScene.playerOne?.leftButtonUp())
     const RightMobileInput = this.add.rectangle(50, 240, 50, 50, 0x0000ff)
     RightMobileInput.setOrigin(0, 0)
     RightMobileInput.setInteractive()
