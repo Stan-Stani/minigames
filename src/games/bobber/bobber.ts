@@ -312,7 +312,7 @@ export class BobberScene extends Scene {
 
         left
           .on('down', this.playerOne.leftButtonDown)
-          .on('up', this.playerOne.leftButonUp)
+          .on('up', this.playerOne.leftButtonUp)
 
         numPadOne.on('down', this.playerOne.setTeleportButtonDown)
         numPadTwo.on('down', this.playerOne.invokeTeleportButtonDown)

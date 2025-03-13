@@ -107,11 +107,23 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.peerConfig?.myPeerPlayerConn) {
       const myPeerPlayerConn = this.peerConfig?.myPeerPlayerConn
       myPeerPlayerConn.on('data', (data) => {
-        if (data.right) {
+        if (data.keyInfo.right) {
           this.rightButtonDown()
-        } else if (!data.right) {
+        } else if (!data.keyInfo.right) {
           this.rightButtonUp()
         }
+        if (data.keyInfo.left) {
+          this.leftButtonDown()
+        } else if (!data.keyInfo.left) {
+          this.leftButtonUp()
+        }
+        if (data.keyInfo.down) {
+          this.diveButtonDown()
+        } else if (!data.keyInfo.down) {
+          this.diveButtonUp()
+        }
+        this.setX(data.x)
+        this.setY(data.y)
       })
     }
 
@@ -190,13 +202,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.setVelocityY(100)
       this.keyInfo.down = true
       if (!this.peerConfig?.myPeerPlayerConn) {
-        this.peerConfig?.peerGroup?.announce(this.keyInfo)
+        const { keyInfo, x, y } = this
+        const data = { keyInfo, x, y }
+        this.peerConfig?.peerGroup?.announce(data)
       }
     }
   }
 
   diveButtonUp = () => {
     this.keyInfo.down = false
+    if (!this.peerConfig?.myPeerPlayerConn) {
+      const { keyInfo, x, y } = this
+      const data = { keyInfo, x, y }
+      this.peerConfig?.peerGroup?.announce(data)
+    }
   }
 
   rightButtonDown = () => {
@@ -204,7 +223,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setHorizontalAcceleration('right')
     this.isRunning = true
     if (!this.peerConfig?.myPeerPlayerConn) {
-      this.peerConfig?.peerGroup?.announce(this.keyInfo)
+      const { keyInfo, x, y } = this
+      const data = { keyInfo, x, y }
+      this.peerConfig?.peerGroup?.announce(data)
     }
   }
 
@@ -222,7 +243,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
     this.isRunning = false
     if (!this.peerConfig?.myPeerPlayerConn) {
-      this.peerConfig?.peerGroup?.announce(this.keyInfo)
+      const { keyInfo, x, y } = this
+      const data = { keyInfo, x, y }
+      this.peerConfig?.peerGroup?.announce(data)
     }
   }
 
@@ -230,9 +253,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.keyInfo.left = true
     this.setHorizontalAcceleration('left')
     this.isRunning = true
+    if (!this.peerConfig?.myPeerPlayerConn) {
+      const { keyInfo, x, y } = this
+      const data = { keyInfo, x, y }
+      this.peerConfig?.peerGroup?.announce(data)
+    }
   }
 
-  leftButonUp = () => {
+  leftButtonUp = () => {
     this.keyInfo.left = false
     // See right key up event explanation
     if ((this?.body.acceleration?.x ?? 0) < 0) {
@@ -243,6 +271,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
     this.isRunning = false
+    if (!this.peerConfig?.myPeerPlayerConn) {
+      const { keyInfo, x, y } = this
+      const data = { keyInfo, x, y }
+      this.peerConfig?.peerGroup?.announce(data)
+    }
   }
 
   setTeleportButtonDown = () => {
