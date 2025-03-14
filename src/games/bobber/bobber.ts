@@ -93,10 +93,6 @@ export class BobberScene extends Scene {
     })
   }
 
-  
-
- 
-
   preload() {
     this.load.image('background1', './bobber/background1.png')
     this.load.image('player', './bobber/player.png')
@@ -134,12 +130,56 @@ export class BobberScene extends Scene {
     background.setOrigin(0, 0).setDepth(-4).setScrollFactor(0)
 
     this.physics.world.setBounds(0, 0, WIDTH * 11, HEIGHT)
-    this.cameras.main.setBounds(0, 0, 1024 * 4, HEIGHT + 500)
+    this.cameras.main.setBounds(0, 0, 1024 * 4, HEIGHT)
 
     const map = this.make.tilemap({ key: 'tilemapLevel1' })
     const tileset = map.addTilesetImage('tiles', 'tiles')
 
     const spawnLayer = map.getObjectLayer('Spawn')
+    const textLayer = map.getObjectLayer('text')
+
+    if (textLayer && textLayer.objects) {
+      // Iterate through all objects in the layer
+      textLayer.objects.forEach((object) => {
+        // Check if this is a text object (text objects in Tiled have a 'text' property)
+        if (object.text) {
+          // Create text properties from the Tiled object
+          const textConfig: {
+            x: number | undefined
+            y: number | undefined
+            text: any
+            style: Phaser.Types.GameObjects.Text.TextStyle
+          } = {
+            x: object.x,
+            y: object.y,
+            text: object.text.text, // The actual text content
+            style: {
+              font:
+                object.text.pixelsize ??
+                '16' + 'px ' + (object.text.fontfamily || 'Arial'),
+              color: object.text.color || '#000000',
+              align: object.text.halign || 'center',
+            },
+          }
+
+          // Create the text object in Phaser
+          const textObject = this.add.text(
+            textConfig.x,
+            textConfig.y,
+            textConfig.text,
+            textConfig.style
+          )
+
+          // Handle text alignment and origin
+          if (object.text.halign === 'center') {
+            textObject.setOrigin(0.5, 0)
+          } else if (object.text.halign === 'right') {
+            textObject.setOrigin(1, 0)
+          }
+
+        }
+      })
+    }
 
     if (!spawnLayer) {
       return
@@ -333,8 +373,6 @@ export class BobberScene extends Scene {
     stickyMessage('brakingInfo:', this.playerOne?.brakingInfo)
     if (!this.playerOne || !this.initialSpawn) return
 
-   
-
     this.playerOne.update(time, delta)
     this.peerPlayerArr?.forEach((p) => {
       p.update(time, delta)
@@ -346,8 +384,6 @@ export class BobberScene extends Scene {
     // stickyMessage(this.playerOne?.body?.velocity)
 
     // Apply friction factor to the player's velocity and make it frame rate independent
-
-    
   }
 }
 
