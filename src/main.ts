@@ -207,7 +207,9 @@ class MenuScene extends Scene implements IMenuScene {
     {
       text: 'Connect to Peers',
       action: async () => {
-        ;(await this.peerGroup.registerWithPeerServerAsync()).openConnectionsAsync()
+        ;(
+          await this.peerGroup.registerWithPeerServerAsync()
+        ).openConnectionsAsync()
       },
     },
     // {
@@ -222,12 +224,6 @@ class MenuScene extends Scene implements IMenuScene {
     //     conn = peerMe ? connectToPeer(peerMe) : undefined
     //   },
     // },
-    {
-      text: 'Talk to Peers',
-      action: () => {
-        this.peerGroup.announce('heyo')
-      },
-    },
   ]
 
   settingsMenuSeed: IMenuScene['settingsMenuSeed'] = [
@@ -308,10 +304,30 @@ class MenuScene extends Scene implements IMenuScene {
   activeMenu: IMenuScene['activeMenu'] = new Map()
   mainMenu: IMenuScene['mainMenu'] = new Map()
   settingsMenu: IMenuScene['settingsMenu'] = new Map()
+  peerStatusText: Phaser.GameObjects.Text | undefined
 
   // https://newdocs.phaser.io/docs/3.55.2/Phaser.Tilemaps.TilemapLayer#putTilesAt
 
-  preload() {}
+  preload() {
+    this.peerGroup
+      .registerWithPeerServerAsync()
+      .then((peerGroup) => peerGroup.openConnectionsAsync())
+      .then((peerGroup) => {
+        this.peerStatusText = this.add.text(
+          (WIDTH / 10) * 9,
+          (GAME_HEIGHT / 10) * 7,
+          `connected \nto ${peerGroup.connections.length} peers`,
+          FONT_OPTIONS
+        )
+        this.peerStatusText.setOrigin(1, 0)
+      })
+
+    this.peerGroup.peerMe?.on('connection', () => {
+      this.peerStatusText?.setText(
+        `connected \nto ${this.peerGroup.connections.length} peers`
+      )
+    })
+  }
 
   setUpMenu(menuItems: IMenuItemSeed[], isActive: boolean) {
     const builtMenu: IBuiltMenu = new Map()
