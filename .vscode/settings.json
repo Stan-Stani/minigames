@@ -4,5 +4,9 @@
         "activityBar.background": "#54005C",
         "titleBar.activeBackground": "#760080",
         "titleBar.activeForeground": "#FFF9FF"
-    }
+    },
+    "cSpell.words": [
+        "Breq",
+        "sess"
+    ]
 }
