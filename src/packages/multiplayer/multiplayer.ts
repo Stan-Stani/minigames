@@ -50,7 +50,7 @@ export class PeerGroup {
       (resolve, reject) =>
         this.peerMe?.listAllPeers((peerIds) => {
           peerIdsNotMe = peerIds.filter((id) => id !== this.peerMe?.id)
-          peerIdsNotMe.forEach((id) => {
+          peerIdsNotMe.forEach((id, index, arr) => {
             const connOut = this.peerMe?.connect(id)
             connOut && this.connections.push(connOut)
             try {
@@ -63,9 +63,12 @@ export class PeerGroup {
             } catch (error) {
               console.error(error)
               reject(error)
+            } finally {
+              if (index === arr.length - 1) {
+                resolve(this)
+              }
             }
           })
-          resolve(this)
         })
     )
 
