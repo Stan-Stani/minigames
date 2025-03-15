@@ -209,7 +209,7 @@ export class BobberScene extends Scene {
 
       if (!this.initialSpawn) throw new Error()
 
-      this.peerGroup?.connections.forEach((conn) => {
+      this.peerGroup?.activeConnections.forEach((conn) => {
         const peerPlayer = new Player(this, {
           peerGroup: this.peerGroup,
           myPeerPlayerConn: conn,

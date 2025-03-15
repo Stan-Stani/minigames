@@ -83,9 +83,9 @@ function manageAspectRatio(
 
   if (initialRun) {
     // Resize the canvas when the window is resized
-    window.addEventListener('resize', () =>
-      manageAspectRatio(element, aspectRatioConfig, game, false)
-    )
+    // window.addEventListener('resize', () =>
+    //   manageAspectRatio(element, aspectRatioConfig, game, false)
+    // )
   }
 }
 
@@ -129,8 +129,8 @@ if (HAS_LOCAL_STORAGE) {
     BobberScene.teleportCheat = initialTeleportCheatLocation
 }
 
-const WIDTH = 256
-const GAME_HEIGHT = 240
+const WIDTH = 256 * 4
+const GAME_HEIGHT = 240 * 4
 const MOBILE_INPUT_HEIGHT = 50
 const GRAVITY = 128
 
@@ -154,7 +154,7 @@ const SCREEN_CENTER = [WIDTH / 2, GAME_HEIGHT / 2]
 const FONT_SIZE = 16
 const LINE_HEIGHT = 21
 const FONT_OPTIONS = {
-  fontSize: `${FONT_SIZE}px`,
+  fontSize: `${FONT_SIZE * 4}px`,
   fill: '#FFF',
   fontStyle: 'bold',
 }
@@ -316,7 +316,7 @@ class MenuScene extends Scene implements IMenuScene {
         this.peerStatusText = this.add.text(
           (WIDTH / 10) * 9,
           (GAME_HEIGHT / 10) * 7,
-          `connected \nto ${peerGroup.connections.length} peers`,
+          `connected \nto ${peerGroup.activeConnections.length} peers`,
           FONT_OPTIONS
         )
         this.peerStatusText.setOrigin(1, 0)
@@ -324,7 +324,7 @@ class MenuScene extends Scene implements IMenuScene {
 
     this.peerGroup.peerMe?.on('connection', () => {
       this.peerStatusText?.setText(
-        `connected \nto ${this.peerGroup.connections.length} peers`
+        `connected \nto ${this.peerGroup.activeConnections.length} peers`
       )
     })
   }
@@ -429,14 +429,14 @@ const config: Phaser.Types.Core.GameConfig = {
 
 const game = new Game(config)
 
-manageAspectRatio(
-  document.getElementById('game'),
-  {
-    landscape: { width: 256, height: GAME_HEIGHT },
-    portrait: { width: 256, height: GAME_HEIGHT + MOBILE_INPUT_HEIGHT },
-  },
-  game
-)
+// manageAspectRatio(
+//   document.getElementById('game'),
+//   {
+//     landscape: { width: 256, height: GAME_HEIGHT },
+//     portrait: { width: 256, height: GAME_HEIGHT + MOBILE_INPUT_HEIGHT },
+//   },
+//   game
+// )
 
 // Thanks Claude 3.5 Sonnet!
 if (import.meta.hot) {
