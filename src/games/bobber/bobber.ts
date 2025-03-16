@@ -176,7 +176,6 @@ export class BobberScene extends Scene {
           } else if (object.text.halign === 'right') {
             textObject.setOrigin(1, 0)
           }
-
         }
       })
     }
@@ -209,10 +208,10 @@ export class BobberScene extends Scene {
 
       if (!this.initialSpawn) throw new Error()
 
-      this.peerGroup?.connections.forEach((conn) => {
+      this.peerGroup?.playerSessions.active.forEach((sess) => {
         const peerPlayer = new Player(this, {
           peerGroup: this.peerGroup,
-          myPeerPlayerConn: conn,
+          myPeerPlayerConn: sess.connection,
         })
 
         this.peerPlayerArr?.push(peerPlayer)
@@ -234,7 +233,6 @@ export class BobberScene extends Scene {
         skeletonWalk
       )
       skeletonWalk.play({ key: 'default', repeat: -1 })
-      console.log(thisanim)
 
       if (!this.kill) {
         throw new Error(`kill is ${this.kill} but cannot be falsy`)

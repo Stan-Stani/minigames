@@ -120,7 +120,6 @@ export class PeerGroup {
   me: {
     peer: Peer | undefined
     initInfo: InitInfo
-    tints: {} & Tints
   }
 
   playerSessions = {
@@ -139,41 +138,7 @@ export class PeerGroup {
       initInfo: {
         timestamp: Date.now(),
         pronouns: { nickname: 'Breq' },
-        tint: null,
-      },
-      tints: {
-        available: [...TINTS],
-        used: [],
-        myTint: null,
-        moveRandomTint(source, destination) {
-          const indexToRemove = Math.floor(Math.random() * source.length)
-          const movedTint = source.splice(indexToRemove, 1)[0]
-          destination.push(movedTint)
-          return movedTint
-        },
-        consumeRandomTint() {
-          const tints = this
-
-          /** Returns moved tint */
-
-          if (tints.available.length < 1) {
-            tints.available = [...tints.used]
-            tints.used = []
-          }
-
-          return tints.moveRandomTint(this.available, this.used)
-        },
-        consumeTint(tint: number) {
-          const tints = this
-          const indexToRemove = tints.available.findIndex((t) => t === tint)
-          return tints.available.splice(indexToRemove, 1)[0]
-        },
-        decideMyTint() {
-          const tints = this
-
-          tints.myTint = tints.consumeRandomTint()
-          return tints.myTint
-        },
+        tint: TINTS[Math.floor(Math.random() * TINTS.length)],
       },
     }
   }
@@ -188,15 +153,17 @@ export class PeerGroup {
     })
 
     this.me.peer.on('connection', (connIn) => {
-      const sessIn = new PlayerSession(connIn, {
-        pronouns: { nickname: '' },
-        timestamp: null,
-        tint: null,
+      connIn.on('open', () => {
+        const sessIn = new PlayerSession(connIn, {
+          pronouns: { nickname: '' },
+          timestamp: null,
+          tint: null,
+        })
+        this.playerSessions.active.set(connIn.peer, sessIn)
+        console.log(`Peer (${connIn.peer}) connected.`)
+        this.#handleData(connIn)
+        this.doHandshake(sessIn)
       })
-      this.playerSessions.active.set(connIn.peer, sessIn)
-      console.log(`Peer (${connIn.peer}) connected.`)
-      this.doHandshake(sessIn)
-      this.#handleData(connIn)
     })
 
     const peerGroupPromise = new Promise<typeof this>((resolve, reject) => {
@@ -262,58 +229,6 @@ export class PeerGroup {
               // Allow some time to try to
               // complete handshake with all active players
               setTimeout(() => {
-                if (this.me.initInfo.tint === null) {
-                  const colorfulSessions = [
-                    ...this.playerSessions.active,
-                  ].filter(([_id, sess]) => sess.initInfo.tint !== null)
-                  const tintCounts = TINTS.reduce(
-                    (acc, curr) => acc.set(curr, 0),
-                    new Map<keyof typeof TINTS, number>()
-                  )
-
-                  colorfulSessions.forEach(([id, sess]) => {
-                    if (sess.initInfo.tint === null) {
-                      throw new Error(
-                        `tint should not be ${sess.initInfo.tint}`
-                      )
-                    }
-                    const prevCount = tintCounts.get(sess.initInfo.tint)
-                    if (prevCount === undefined) {
-                      throw new Error(
-                        `tintCount's ${sess.initInfo.tint} should not be ${prevCount}`
-                      )
-                    }
-
-                    tintCounts.set(sess.initInfo.tint, prevCount + 1)
-                  })
-                  const ascendingTintCounts = [...tintCounts].sort(
-                    ([_keyA, valueA], [_keyB, valueB]) => valueA - valueB
-                  )
-
-                  const colorlessSessions = [
-                    ...this.playerSessions.active,
-                  ].filter(([_id, sess]) => sess.initInfo.tint === null)
-
-                  colorlessSessions.push([
-                    mePeer.id,
-                    new PlayerSession({} as DataConnection, this.me.initInfo),
-                  ])
-
-                  this.ascendingColorlessSessionsByInitTimestamp =
-                    colorlessSessions.sort(
-                      ([_keyA, valueA], [_keyB, valueB]) => {
-                        if (
-                          valueA.initInfo.timestamp === null ||
-                          valueB.initInfo.timestamp === null
-                        ) {
-                          throw new Error(`Sess timestamps should not be null.`)
-                        }
-                        return (
-                          valueA.initInfo.timestamp - valueB.initInfo.timestamp
-                        )
-                      }
-                    )
-                }
                 resolve(this)
               }, 5000)
             }
@@ -326,6 +241,7 @@ export class PeerGroup {
   }
 
   doHandshake(sess: PlayerSession) {
+    console.log('I send handshake', this.me.initInfo.tint)
     const data: HandshakeDatatype = {
       type: 'handshake',
       initInfo: this.me.initInfo,
@@ -347,28 +263,6 @@ export class PeerGroup {
           throw new Error(`Sess is ${sess}.`)
         }
         sess.initInfo = data.initInfo
-
-        if (this.ascendingColorlessSessionsByInitTimestamp) {
-
-          const indexThatJustAnnouncedColor =
-            this.ascendingColorlessSessionsByInitTimestamp.findIndex(
-              ([id, _sess]) => {
-                return conn.peer === id
-              }
-            )
-          this.ascendingColorlessSessionsByInitTimestamp.splice(
-            indexThatJustAnnouncedColor,
-            1
-          )
-
-          if (!this.me.peer) {
-            throw new Error(`this.me.peer is ${this.me.peer}`)
-          }
-
-          if (this.ascendingColorlessSessionsByInitTimestamp[0][0] === this.me.peer.id) {
-            this.announce
-          }
-        }
       } else {
       }
     })

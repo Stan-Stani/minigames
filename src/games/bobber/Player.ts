@@ -82,23 +82,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this)
 
     if (this.peerConfig?.myPeerPlayerConn) {
-      const myTintIndex = Math.floor(
-        Math.random() * Player.#tints.available.length
-      )
-      if (myTintIndex !== -1) {
-        this.myTint = Player.#tints.available.splice(myTintIndex, 1)[0]
-
-        Player.#tints.used.push(this.myTint)
-        this.setTint(this.myTint)
-      } else {
-        Player.#tints.available = [...Player.#tints.used]
-        Player.#tints.used = []
-        const myTintIndex = Math.floor(
-          Math.random() * Player.#tints.available.length
+      const myPlayerSession =
+        this.peerConfig.peerGroup?.playerSessions.active.get(
+          this.peerConfig.myPeerPlayerConn.peer
         )
-        this.myTint = Player.#tints.available.splice(myTintIndex, 1)[0]
-        Player.#tints.used.push(this.myTint)
-        this.setTint(this.myTint)
+      if (!myPlayerSession) {
+        throw new Error(`myPlayerSession is ${myPlayerSession}`)
+      }
+      if (myPlayerSession.initInfo.tint) {
+        this.setTint(myPlayerSession.initInfo.tint)
+      }
+    } else {
+      if (this.peerConfig?.peerGroup?.me.initInfo.tint) {
+        this.setTint(this.peerConfig?.peerGroup?.me.initInfo.tint)
       }
     }
 
@@ -245,7 +241,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   // rebinding the methods' thises
   diveButtonDown = () => {
     if (this.isImmersed) {
-      console.log('Lalonde', 'imm')
       this.setVelocityY(100)
       this.keyInfo.down = true
       if (!this.peerConfig?.myPeerPlayerConn) {
@@ -535,10 +530,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       } else if (this.keyInfo.left) {
         this.setHorizontalAcceleration('left')
       }
-    }
-
-    if (this.peerConfig?.myPeerPlayerConn) {
-      console.log(this.isOnGround, this.body.blocked.down)
     }
   }
 

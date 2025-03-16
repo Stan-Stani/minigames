@@ -316,7 +316,7 @@ class MenuScene extends Scene implements IMenuScene {
         this.peerStatusText = this.add.text(
           (WIDTH / 10) * 9,
           (GAME_HEIGHT / 10) * 7,
-          `connected \nto ${peerGroup.activeConnections.length} peers`,
+          `connected \nto ${peerGroup.playerSessions.active.size} peers`,
           FONT_OPTIONS
         )
         this.peerStatusText.setOrigin(1, 0)
@@ -324,7 +324,7 @@ class MenuScene extends Scene implements IMenuScene {
 
     this.peerGroup.peerMe?.on('connection', () => {
       this.peerStatusText?.setText(
-        `connected \nto ${this.peerGroup.activeConnections.length} peers`
+        `connected \nto ${this.peerGroup.playerSessions.active.size} peers`
       )
     })
   }
