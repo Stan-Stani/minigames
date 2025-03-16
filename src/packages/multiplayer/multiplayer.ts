@@ -30,7 +30,9 @@ interface PlayerSnapshotDatatype<T extends {}> {
 
 type Datatype<T extends {}> = HandshakeDatatype | PlayerSnapshotDatatype<T>
 
-function isHandShakeDatatype(datatype: any): datatype is HandshakeDatatype {
+export function isHandShakeDatatype(
+  datatype: any
+): datatype is HandshakeDatatype {
   return 'type' in datatype && datatype.type === 'handshake'
 }
 function isPlayerSnapshotDatatype(
@@ -76,7 +78,6 @@ class PlayerSession implements DPlayerSession {
 interface Tints {
   available: number[]
   used: number[]
-  myTint: number | null
   /** Returns moved tint */
   moveRandomTint(source: number[], destination: number[]): number
   /**
@@ -120,6 +121,55 @@ export class PeerGroup {
   me: {
     peer: Peer | undefined
     initInfo: InitInfo
+    state: null | {
+      type: 'wait_for_tint_turn'
+      ascendingColorlessByJoinTime: [string, PlayerSession][]
+    }
+  }
+
+  tints: Tints = {
+    available: [...TINTS],
+    used: [],
+
+    moveRandomTint(source, destination) {
+      const indexToRemove = Math.floor(Math.random() * source.length)
+
+      const movedTint = source.splice(indexToRemove, 1)[0]
+
+      destination.push(movedTint)
+
+      return movedTint
+    },
+
+    consumeRandomTint() {
+      const tints = this
+
+      /** Returns moved tint */
+
+      if (tints.available.length < 1) {
+        tints.available = [...tints.used]
+
+        tints.used = []
+      }
+
+      return tints.moveRandomTint(this.available, this.used)
+    },
+
+    consumeTint(tint: number) {
+      const tints = this
+
+      const indexToRemove = tints.available.findIndex((t) => t === tint)
+
+      return tints.available.splice(indexToRemove, 1)[0]
+    },
+
+    decideMyTint() {
+      const tints = this
+
+      const chosenTint = tints.consumeRandomTint()
+
+      return chosenTint
+    },
   }
 
   playerSessions = {
@@ -138,7 +188,7 @@ export class PeerGroup {
       initInfo: {
         timestamp: Date.now(),
         pronouns: { nickname: 'Breq' },
-        tint: TINTS[Math.floor(Math.random() * TINTS.length)],
+        tint: null,
       },
     }
   }
@@ -150,20 +200,6 @@ export class PeerGroup {
       host: '192.168.86.138',
       port: 41361,
       path: '/',
-    })
-
-    this.me.peer.on('connection', (connIn) => {
-      connIn.on('open', () => {
-        const sessIn = new PlayerSession(connIn, {
-          pronouns: { nickname: '' },
-          timestamp: null,
-          tint: null,
-        })
-        this.playerSessions.active.set(connIn.peer, sessIn)
-        console.log(`Peer (${connIn.peer}) connected.`)
-        this.#handleData(connIn)
-        this.doHandshake(sessIn)
-      })
     })
 
     const peerGroupPromise = new Promise<typeof this>((resolve, reject) => {
@@ -191,49 +227,126 @@ export class PeerGroup {
     }
     let peerIdsNotMe: string[] = []
 
+    mePeer.on('connection', (connIn) => {
+      connIn.on('open', () => {
+        const sessIn = new PlayerSession(connIn, {
+          pronouns: { nickname: '' },
+          timestamp: null,
+          tint: null,
+        })
+        this.playerSessions.active.set(connIn.peer, sessIn)
+        console.log(`Peer (${connIn.peer}) connected.`)
+        this.#handleData(connIn)
+        this.doHandshake(sessIn)
+      })
+    })
+
     const peerGroupPromise = new Promise<PeerGroup>((resolve, reject) => {
       mePeer.listAllPeers((peerIds) => {
         peerIdsNotMe = peerIds.filter((id) => id !== this.me.peer?.id)
-        peerIdsNotMe.forEach((id, index, arr) => {
-          const connOut = mePeer.connect(id)
 
-          try {
-            // Peer Server waits 5 minutes to remove peers from its list
-            // so some likely are no longer active players. Best I can do
-            // is try to handshake with all peers, then wait 5 seconds
-            // and assume I've got all active players.
-            connOut?.on('open', () => {
-              console.log(`Connected to Peer (${id}).`)
-              const sessOut = new PlayerSession(connOut, {
-                pronouns: { nickname: '' },
-                tint: null,
-                timestamp: null,
-              })
-              this.playerSessions.active.set(id, sessOut)
-              this.doHandshake(sessOut)
-              this.#handleData(connOut)
-            })
-          } catch (error) {
-            this.playerSessions.failed.set(
-              id,
-              new PlayerSession(connOut, {
-                pronouns: { nickname: '' },
-                tint: null,
-                timestamp: null,
-              })
-            )
-            console.error(error)
-            reject(error)
-          } finally {
-            if (index === arr.length - 1) {
-              // Allow some time to try to
-              // complete handshake with all active players
-              setTimeout(() => {
-                resolve(this)
-              }, 5000)
+        const establishTint = () => {
+          setTimeout(() => {
+            const activePlayerSessions = this.playerSessions.active
+            if (this.playerSessions.active.size >= TINTS.length) {
+              /** @todo */
+              // just pick and broadcast a random color
+              debugger
+            } else {
+              const colorlessSessions = [...activePlayerSessions].filter(
+                ([_id, sess]) => sess.initInfo.tint === null
+              )
+              colorlessSessions.push([
+                mePeer.id,
+                new PlayerSession({} as DataConnection, this.me.initInfo),
+              ])
+              const colorlessIncludingMe = colorlessSessions
+              const ascendingColorlessByJoinTime = colorlessIncludingMe.sort(
+                ([_keyA, valueA], [_keyB, valueB]) => {
+                  if (
+                    valueA.initInfo.timestamp === null ||
+                    valueB.initInfo.timestamp === null
+                  ) {
+                    throw new Error(`Sess timestamps should not be null.`)
+                  }
+
+                  return valueA.initInfo.timestamp - valueB.initInfo.timestamp
+                }
+              )
+
+              // console.log('colorlessSessions', colorlessSessions.length)
+              // console.log(
+              //   'asc',
+              //   ascendingColorlessByJoinTime[0][0],
+              //   'me',
+              //   mePeer.id
+              // )
+              console.log({ ascendingColorlessByJoinTime })
+              if (ascendingColorlessByJoinTime[0][0] === mePeer.id) {
+                console.log('BINGO')
+                this.me.initInfo.tint = this.tints.decideMyTint()
+                const data: HandshakeDatatype = {
+                  type: 'handshake',
+                  initInfo: this.me.initInfo,
+                }
+                console.log('me first')
+                this.announce(data)
+              } else {
+                console.log('WAIT')
+                this.me.state = {
+                  type: 'wait_for_tint_turn',
+                  ascendingColorlessByJoinTime,
+                }
+              }
             }
-          }
-        })
+
+            resolve(this)
+          }, 5000)
+        }
+
+        if (peerIdsNotMe.length) {
+          peerIdsNotMe.forEach((id, index, arr) => {
+            const connOut = mePeer.connect(id)
+
+            try {
+              // Peer Server waits 5 minutes to remove peers from its list
+              // so some likely are no longer active players. Best I can do
+              // is try to handshake with all peers, then wait 5 seconds
+              // and assume I've got all active players.
+              connOut?.on('open', () => {
+                console.log(`Connected to Peer (${id}).`)
+                const sessOut = new PlayerSession(connOut, {
+                  pronouns: { nickname: '' },
+                  tint: null,
+                  timestamp: null,
+                })
+                this.playerSessions.active.set(id, sessOut)
+                this.doHandshake(sessOut)
+                this.#handleData(connOut)
+              })
+            } catch (error) {
+              this.playerSessions.failed.set(
+                id,
+                new PlayerSession(connOut, {
+                  pronouns: { nickname: '' },
+                  tint: null,
+                  timestamp: null,
+                })
+              )
+              console.error(error)
+              reject(error)
+            } finally {
+              if (index === arr.length - 1) {
+                // Allow some time to try to
+                // complete handshake with all active players
+                console.log('a')
+                establishTint()
+              }
+            }
+          })
+        } else {
+          establishTint()
+        }
       })
     })
 
@@ -263,6 +376,36 @@ export class PeerGroup {
           throw new Error(`Sess is ${sess}.`)
         }
         sess.initInfo = data.initInfo
+
+        if (sess.initInfo.tint) {
+          this.tints.consumeTint(sess.initInfo.tint)
+        }
+
+        if (this.me.state?.type === 'wait_for_tint_turn') {
+          console.log('hey')
+          const indexWhoAnnouncedColor =
+            this.me.state.ascendingColorlessByJoinTime.findIndex(
+              ([id, _sess]) => {
+                conn.peer === id
+              }
+            )
+
+          const myIndex = this.me.state.ascendingColorlessByJoinTime.findIndex(
+            ([id, _sess]) => {
+              this.me.peer?.id === id
+            }
+          )
+
+          if (indexWhoAnnouncedColor === myIndex - 1) {
+            this.me.initInfo.tint = this.tints.decideMyTint()
+            const data: HandshakeDatatype = {
+              type: 'handshake',
+              initInfo: this.me.initInfo,
+            }
+            console.log('i announce my color after waiting. I am ', myIndex)
+            this.announce(data)
+          }
+        }
       } else {
       }
     })

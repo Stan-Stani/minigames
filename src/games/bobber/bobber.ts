@@ -217,6 +217,18 @@ export class BobberScene extends Scene {
         this.peerPlayerArr?.push(peerPlayer)
       })
 
+      // Handle player joining while bobber game is running
+      this.peerGroup?.me.peer?.on('connection', (connIn) => {
+        connIn.on('open', () => {
+          this.peerPlayerArr?.push(
+            new Player(this, {
+              peerGroup: this.peerGroup,
+              myPeerPlayerConn: connIn,
+            })
+          )
+        })
+      })
+
       checkpoints.forEach((cp) => {
         this.makeBuoyComposite(cp.x, cp.y)
       })

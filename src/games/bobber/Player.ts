@@ -2,7 +2,10 @@ import { Scene } from 'phaser'
 import BobberScene from './bobber'
 import { stickyMessage } from '../../debugging/tools'
 import Peer, { DataConnection } from 'peerjs'
-import { PeerGroup } from '../../packages/multiplayer/multiplayer'
+import {
+  isHandShakeDatatype,
+  PeerGroup,
+} from '../../packages/multiplayer/multiplayer'
 
 export interface PlayerLike extends Player {}
 interface PeerConfig {
@@ -149,23 +152,28 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.peerConfig?.myPeerPlayerConn) {
       const myPeerPlayerConn = this.peerConfig?.myPeerPlayerConn
       myPeerPlayerConn.on('data', (data) => {
-        if (data.keyInfo.right) {
-          this.rightButtonDown()
-        } else if (!data.keyInfo.right) {
-          this.rightButtonUp()
+        if (isHandShakeDatatype(data)) {
+          console.log('meow!')
+          data.initInfo.tint && this.setTint(data.initInfo.tint)
+        } else {
+          if (data.keyInfo.right) {
+            this.rightButtonDown()
+          } else if (!data.keyInfo.right) {
+            this.rightButtonUp()
+          }
+          if (data.keyInfo.left) {
+            this.leftButtonDown()
+          } else if (!data.keyInfo.left) {
+            this.leftButtonUp()
+          }
+          if (data.keyInfo.down) {
+            this.diveButtonDown()
+          } else if (!data.keyInfo.down) {
+            this.diveButtonUp()
+          }
+          this.setX(data.x)
+          this.setY(data.y)
         }
-        if (data.keyInfo.left) {
-          this.leftButtonDown()
-        } else if (!data.keyInfo.left) {
-          this.leftButtonUp()
-        }
-        if (data.keyInfo.down) {
-          this.diveButtonDown()
-        } else if (!data.keyInfo.down) {
-          this.diveButtonUp()
-        }
-        this.setX(data.x)
-        this.setY(data.y)
       })
     }
 
@@ -380,6 +388,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   update(_time: number, delta: number) {
+    if (this.peerConfig?.myPeerPlayerConn === undefined) {
+      this.peerConfig?.peerGroup?.me.initInfo.tint &&
+        this.setTint(this.peerConfig?.peerGroup?.me.initInfo.tint)
+    }
+
     if (this.keyInfo.right && this.body.acceleration.x > 0) {
       if (this.angle <= 30) {
         this.angle += 0.06 * delta
