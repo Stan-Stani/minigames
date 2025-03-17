@@ -5,7 +5,7 @@ import Peer, { DataConnection } from 'peerjs'
 import {
   isHandShakeDatatype,
   PeerGroup,
-} from '../../packages/multiplayer/multiplayer'
+} from '../../packages/PeerGroup'
 
 export interface PlayerLike extends Player {}
 interface PeerConfig {

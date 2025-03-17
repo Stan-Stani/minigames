@@ -6,7 +6,7 @@ import {
   toastMessage,
 } from '../../debugging/tools'
 import { Player } from './Player'
-import { PeerGroup } from '../../packages/multiplayer/multiplayer'
+import { PeerGroup } from '../../packages/PeerGroup'
 import { ConnectionType } from 'peerjs'
 const WIDTH = 256
 const HEIGHT = 240

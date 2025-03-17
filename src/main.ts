@@ -11,7 +11,7 @@ import {
   PeerGroup,
   registerWithPeerServerAsync,
   talkToPeers,
-} from './packages/multiplayer/multiplayer'
+} from './packages/PeerGroup'
 
 interface IMenuItemSeed {
   id?: string

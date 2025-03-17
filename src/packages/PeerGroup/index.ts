@@ -44,7 +44,7 @@ function isPlayerSnapshotDatatype(
  * with a more semantic name. A POJO that captures the essence of a
  * {@link PlayerSession}.
  */
-interface DPlayerSession {
+export interface DPlayerSession {
   connection: DataConnection
   initInfo: InitInfo
 }
@@ -339,7 +339,6 @@ export class PeerGroup {
               if (index === arr.length - 1) {
                 // Allow some time to try to
                 // complete handshake with all active players
-                console.log('a')
                 establishTint()
               }
             }
