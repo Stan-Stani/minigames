@@ -13,7 +13,7 @@ export interface DPlayerSession extends HasInitInfo {
   initInfo: InitInfo
 }
 
-class PlayerSession implements DPlayerSession {
+export class PlayerSession implements DPlayerSession {
   connection: DataConnection
   initInfo: InitInfo
 
@@ -37,21 +37,4 @@ class PlayerSession implements DPlayerSession {
       }
     }
   }
-}
-
-interface InitInfo {
-  pronouns: Pronouns
-  timestamp: number | null
-  tint: number | null
-}
-
-/**
- * Represents the self-determined identity of a user.
- * No errors if the nick already exists.
- */
-interface Pronouns {
-  /** Text that identifies this player. Will be randomly assigned
-   * if player doesn't enter a nickname.
-   */
-  nickname: string
 }

@@ -1,5 +1,5 @@
 import { GameObjects, Scene } from 'phaser'
-import { BobberInputScene, InputScene } from './inputScene'
+import { BobberInputScene } from './inputScene'
 import {
   clearStickyMessage,
   stickyMessage,
@@ -8,6 +8,7 @@ import {
 import { Player } from './Player'
 import { PeerGroup } from '../../packages/PeerGroup'
 import { ConnectionType } from 'peerjs'
+import { MultiplayerManager } from './MultiplayerManager'
 const WIDTH = 256
 const HEIGHT = 240
 const GRAVITY = 128
@@ -24,7 +25,7 @@ export class BobberScene extends Scene {
   GRAVITY = GRAVITY
   static teleportCheat: [boolean, number, number] = [false, 0, 0]
   static HAS_LOCAL_STORAGE = false
-  peerGroup: PeerGroup | undefined = undefined
+  multiplayerManager: MultiplayerManager | undefined = undefined
   inspectorScene: any
   #timerText?: GameObjects.Text
   playerOne?: Player
@@ -118,7 +119,7 @@ export class BobberScene extends Scene {
   }
 
   create() {
-    this.peerGroup = this.registry.get('peerGroup')
+    this.multiplayerManager = this.registry.get('multiplayerManager')
     this.scene.launch('BobberInputScene')
     this.#timerText = this.add.text(WIDTH * 0.8, HEIGHT * 0.05, '00', {
       fontSize: `10px`,
@@ -204,25 +205,30 @@ export class BobberScene extends Scene {
       this.platforms = map.createLayer('platforms', tileset)!
       this.platforms!.setCollisionByExclusion([-1], true)
       this.kill = map.createLayer('kill', tileset)
-      this.playerOne = new Player(this, { peerGroup: this.peerGroup })
+      this.playerOne = new Player(this, {
+        multiplayerManager: this.multiplayerManager,
+      })
+      this.playerOne.setDepth(1)
 
       if (!this.initialSpawn) throw new Error()
 
-      this.peerGroup?.playerSessions.active.forEach((sess) => {
-        const peerPlayer = new Player(this, {
-          peerGroup: this.peerGroup,
-          myPeerPlayerConn: sess.connection,
-        })
+      this.multiplayerManager?.playerSessionsContainer.active.forEach(
+        (sess) => {
+          const peerPlayer = new Player(this, {
+            multiplayerManager: this.multiplayerManager,
+            myPeerPlayerConn: sess.connection,
+          })
 
-        this.peerPlayerArr?.push(peerPlayer)
-      })
+          this.peerPlayerArr?.push(peerPlayer)
+        }
+      )
 
       // Handle player joining while bobber game is running
-      this.peerGroup?.me.peer?.on('connection', (connIn) => {
+      this.multiplayerManager?.meNode.peerMe?.on('connection', (connIn) => {
         connIn.on('open', () => {
           this.peerPlayerArr?.push(
             new Player(this, {
-              peerGroup: this.peerGroup,
+              multiplayerManager: this.multiplayerManager,
               myPeerPlayerConn: connIn,
             })
           )

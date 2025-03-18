@@ -2,14 +2,11 @@ import { Scene } from 'phaser'
 import BobberScene from './bobber'
 import { stickyMessage } from '../../debugging/tools'
 import Peer, { DataConnection } from 'peerjs'
-import {
-  isHandShakeDatatype,
-  PeerGroup,
-} from '../../packages/PeerGroup'
+import { MultiplayerManager } from './MultiplayerManager'
 
 export interface PlayerLike extends Player {}
-interface PeerConfig {
-  peerGroup?: PeerGroup
+interface multiplayerConfig {
+  multiplayerManager?: MultiplayerManager
   /** The player's remote peer connection.
    * @note If defined, then this is a network player. If not,
    * then this is a client player.
@@ -19,7 +16,7 @@ interface PeerConfig {
 
 export interface Player
   extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
-  peerConfig?: PeerConfig
+  multiplayerConfig?: multiplayerConfig
   scene: BobberScene
   brakingInfo: {
     isBraking: boolean
@@ -46,48 +43,27 @@ export interface Player
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   declare body: Phaser.Physics.Arcade.Body
-  static #tints: { available: number[]; used: number[] } = {
-    available: [
-      0xff5733, // Bright red-orange
-      0x33ff57, // Bright green
-      0x3357ff, // Bright blue
-      0xf3ff33, // Bright yellow
-      0xf033ff, // Bright magenta
-      0x33fff3, // Bright cyan
-      0x8033ff, // Purple
-      0xff338a, // Pink
-      0xff9933, // Orange
-      0x99ff33, // Lime
-      0x33ff99, // Mint
-      0x3399ff, // Sky blue
-      0x9933ff, // Violet
-      0xffd433, // Gold
-      0x33ffd4, // Turquoise
-      0xd433ff, // Lavender
-      0xff3333, // Red
-      0x33ff33, // Green
-      0x6b33ff, // Indigo
-      0xff33d4, // Hot pink
-    ],
-    used: [],
-  }
+
   myTint: number | undefined = undefined
   constructor(
     scene: BobberScene,
-    peerConfig?: { peerGroup?: PeerGroup; myPeerPlayerConn?: DataConnection }
+    multiplayerConfig?: {
+      multiplayerManager?: MultiplayerManager
+      myPeerPlayerConn?: DataConnection
+    }
   ) {
     if (!scene.initialSpawn) {
       throw new Error('initialSpawn is falsy')
     }
     super(scene, scene.initialSpawn.x, scene.initialSpawn.y, 'player')
-    this.peerConfig = peerConfig
+    this.multiplayerConfig = multiplayerConfig
 
     scene.add.existing(this)
 
-    if (this.peerConfig?.myPeerPlayerConn) {
+    if (this.multiplayerConfig?.myPeerPlayerConn) {
       const myPlayerSession =
-        this.peerConfig.peerGroup?.playerSessions.active.get(
-          this.peerConfig.myPeerPlayerConn.peer
+        this.multiplayerConfig?.multiplayerManager?.playerSessionsContainer.active.get(
+          this.multiplayerConfig.myPeerPlayerConn.peer
         )
       if (!myPlayerSession) {
         throw new Error(`myPlayerSession is ${myPlayerSession}`)
@@ -96,8 +72,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setTint(myPlayerSession.initInfo.tint)
       }
     } else {
-      if (this.peerConfig?.peerGroup?.me.initInfo.tint) {
-        this.setTint(this.peerConfig?.peerGroup?.me.initInfo.tint)
+      if (this.multiplayerConfig?.multiplayerManager?.meNode.initInfo.tint) {
+        this.setTint(
+          this.multiplayerConfig?.multiplayerManager?.meNode.initInfo.tint
+        )
       }
     }
 
@@ -106,7 +84,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.body.setSize(10, 14).setOffset(this.body.offset.x, 3)
 
     this.body.setBounce(0.3)
-    if (this.peerConfig?.myPeerPlayerConn) {
+    if (this.multiplayerConfig?.myPeerPlayerConn) {
       // this.body.setAllowGravity(false)
       this.setDepth(-2)
       // this.meAndPeerGroup.connMe.on('data', (data) => {
@@ -134,7 +112,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       number,
       number,
     ]
-    if (!this.peerConfig?.myPeerPlayerConn) {
+    if (!this.multiplayerConfig?.myPeerPlayerConn) {
       scene.cameras.main.startFollow(this, true)
     }
     this.respawn = (dest) => {
@@ -149,10 +127,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
     this.respawnedPreviousFrame = false
 
-    if (this.peerConfig?.myPeerPlayerConn) {
-      const myPeerPlayerConn = this.peerConfig?.myPeerPlayerConn
+    if (this.multiplayerConfig?.myPeerPlayerConn) {
+      const myPeerPlayerConn = this.multiplayerConfig?.myPeerPlayerConn
       myPeerPlayerConn.on('data', (data) => {
-        if (isHandShakeDatatype(data)) {
+        /** @todo use dataManager instead */
+        if (data.type === 'handshake') {
           console.log('meow!')
           data.initInfo.tint && this.setTint(data.initInfo.tint)
         } else {
@@ -251,20 +230,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.isImmersed) {
       this.setVelocityY(100)
       this.keyInfo.down = true
-      if (!this.peerConfig?.myPeerPlayerConn) {
+      if (!this.multiplayerConfig?.myPeerPlayerConn) {
         const { keyInfo, x, y } = this
         const data = { keyInfo, x, y }
-        this.peerConfig?.peerGroup?.announce(data)
+        this.multiplayerConfig?.multiplayerManager?.peerGroup?.announce(data)
       }
     }
   }
 
   diveButtonUp = () => {
     this.keyInfo.down = false
-    if (!this.peerConfig?.myPeerPlayerConn) {
+    if (!this.multiplayerConfig?.myPeerPlayerConn) {
       const { keyInfo, x, y } = this
       const data = { keyInfo, x, y }
-      this.peerConfig?.peerGroup?.announce(data)
+      this.multiplayerConfig?.multiplayerManager?.peerGroup?.announce(data)
     }
   }
 
@@ -272,10 +251,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.keyInfo.right = true
     this.setHorizontalAcceleration('right')
     this.isRunning = true
-    if (!this.peerConfig?.myPeerPlayerConn) {
+    if (!this.multiplayerConfig?.myPeerPlayerConn) {
       const { keyInfo, x, y } = this
       const data = { keyInfo, x, y }
-      this.peerConfig?.peerGroup?.announce(data)
+      this.multiplayerConfig?.multiplayerManager?.peerGroup?.announce(data)
     }
   }
 
@@ -292,10 +271,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
     this.isRunning = false
-    if (!this.peerConfig?.myPeerPlayerConn) {
+    if (!this.multiplayerConfig?.myPeerPlayerConn) {
       const { keyInfo, x, y } = this
       const data = { keyInfo, x, y }
-      this.peerConfig?.peerGroup?.announce(data)
+      this.multiplayerConfig?.multiplayerManager?.peerGroup?.announce(data)
     }
   }
 
@@ -303,10 +282,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.keyInfo.left = true
     this.setHorizontalAcceleration('left')
     this.isRunning = true
-    if (!this.peerConfig?.myPeerPlayerConn) {
+    if (!this.multiplayerConfig?.myPeerPlayerConn) {
       const { keyInfo, x, y } = this
       const data = { keyInfo, x, y }
-      this.peerConfig?.peerGroup?.announce(data)
+      this.multiplayerConfig?.multiplayerManager?.peerGroup?.announce(data)
     }
   }
 
@@ -321,10 +300,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
     this.isRunning = false
-    if (!this.peerConfig?.myPeerPlayerConn) {
+    if (!this.multiplayerConfig?.myPeerPlayerConn) {
       const { keyInfo, x, y } = this
       const data = { keyInfo, x, y }
-      this.peerConfig?.peerGroup?.announce(data)
+      this.multiplayerConfig?.multiplayerManager?.peerGroup?.announce(data)
     }
   }
 
@@ -388,9 +367,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   update(_time: number, delta: number) {
-    if (this.peerConfig?.myPeerPlayerConn === undefined) {
-      this.peerConfig?.peerGroup?.me.initInfo.tint &&
-        this.setTint(this.peerConfig?.peerGroup?.me.initInfo.tint)
+    if (this.multiplayerConfig?.myPeerPlayerConn === undefined) {
+      this.multiplayerConfig?.multiplayerManager?.meNode.initInfo.tint &&
+        this.setTint(
+          this.multiplayerConfig?.multiplayerManager?.meNode.initInfo.tint
+        )
     }
 
     if (this.keyInfo.right && this.body.acceleration.x > 0) {

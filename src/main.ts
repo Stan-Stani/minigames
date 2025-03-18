@@ -1,17 +1,12 @@
 import './style.css'
 import { Game, Scene, WEBGL } from 'phaser'
 import { PlatformerTestScene } from './games/platformerTest'
-import { BobberScene, IPlayer } from './games/bobber/bobber'
-import { BobberInputScene, InputScene } from './games/bobber/inputScene'
+import { BobberScene } from './games/bobber/bobber'
+import { BobberInputScene } from './games/bobber/inputScene'
 
 import Peer, { DataConnection } from 'peerjs'
-import {
-  connectToPeer,
-  getPeerIdsAsync,
-  PeerGroup,
-  registerWithPeerServerAsync,
-  talkToPeers,
-} from './packages/PeerGroup'
+
+import { MultiplayerManager } from './games/bobber/MultiplayerManager'
 
 interface IMenuItemSeed {
   id?: string
@@ -168,7 +163,7 @@ interface IMenuScene {
 }
 
 class MenuScene extends Scene implements IMenuScene {
-  peerGroup = new PeerGroup()
+  multiplayerManager = new MultiplayerManager()
 
   toggleToScene = (sceneIndicator: Parameters<typeof this.scene.start>[0]) => {
     this.scene.stop()
@@ -202,14 +197,6 @@ class MenuScene extends Scene implements IMenuScene {
       text: 'Settings',
       action: () => {
         this.toggleToMenu(this.settingsMenu)
-      },
-    },
-    {
-      text: 'Connect to Peers',
-      action: async () => {
-        ;(
-          await this.peerGroup.registerWithPeerServerAsync()
-        ).openConnectionsAsync()
       },
     },
     // {
@@ -309,22 +296,21 @@ class MenuScene extends Scene implements IMenuScene {
   // https://newdocs.phaser.io/docs/3.55.2/Phaser.Tilemaps.TilemapLayer#putTilesAt
 
   preload() {
-    this.peerGroup
-      .registerWithPeerServerAsync()
-      .then((peerGroup) => peerGroup.openConnectionsAsync())
-      .then((peerGroup) => {
-        this.peerStatusText = this.add.text(
-          (WIDTH / 10) * 9,
-          (GAME_HEIGHT / 10) * 7,
-          `connected \nto ${peerGroup.playerSessions.active.size} peers`,
-          FONT_OPTIONS
-        )
-        this.peerStatusText.setOrigin(1, 0)
-      })
+    this.multiplayerManager.peerGroup.shouldBeReadyAsync().then(() => {
+      this.peerStatusText = this.add.text(
+        (WIDTH / 10) * 9,
+        (GAME_HEIGHT / 10) * 7,
+        `connected \nto \
+        ${this.multiplayerManager.playerSessionsContainer.active.size} peers`,
+        FONT_OPTIONS
+      )
+      this.peerStatusText.setOrigin(1, 0)
+    })
 
-    this.peerGroup.peerMe?.on('connection', () => {
+    this.multiplayerManager.peerGroup.onConnOpen(() => {
       this.peerStatusText?.setText(
-        `connected \nto ${this.peerGroup.playerSessions.active.size} peers`
+        `connected \nto \
+        ${this.multiplayerManager.playerSessionsContainer.active.size} peers`
       )
     })
   }
@@ -366,7 +352,7 @@ class MenuScene extends Scene implements IMenuScene {
     return builtMenu
   }
   create() {
-    this.registry.set({ peerGroup: this.peerGroup })
+    this.registry.set({ multiplayerManager: this.multiplayerManager })
     this.mainMenu = this.setUpMenu(this.mainMenuSeed, true)
     this.settingsMenu = this.setUpMenu(this.settingsMenuSeed, false)
   }

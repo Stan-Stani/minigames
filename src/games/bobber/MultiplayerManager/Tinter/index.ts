@@ -1,4 +1,5 @@
 interface ITinter {
+  readonly tints: number[]
   available: number[]
   used: number[]
 
@@ -8,9 +9,9 @@ interface ITinter {
   decideMyTint(this: ITinter): number
 }
 
-class Tinter implements ITinter {
+export class Tinter implements ITinter {
   constructor(
-    TINTS = [
+    tints = [
       0xff5733, // Bright red-orange
       0x33ff57, // Bright green
       0x3357ff, // Bright blue
@@ -33,8 +34,10 @@ class Tinter implements ITinter {
       0xff33d4, // Hot pink
     ]
   ) {
-    this.available = [...TINTS]
+    this.tints = [...tints]
+    this.available = [...tints]
   }
+  readonly tints: number[]
   available: number[]
   used: number[] = []
 
