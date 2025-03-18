@@ -208,7 +208,6 @@ export class BobberScene extends Scene {
       this.playerOne = new Player(this, {
         multiplayerManager: this.multiplayerManager,
       })
-      this.playerOne.setDepth(1)
 
       if (!this.initialSpawn) throw new Error()
 

@@ -301,7 +301,7 @@ class MenuScene extends Scene implements IMenuScene {
         (WIDTH / 10) * 9,
         (GAME_HEIGHT / 10) * 7,
         `connected \nto \
-        ${this.multiplayerManager.playerSessionsContainer.active.size} peers`,
+${this.multiplayerManager.playerSessionsContainer.active.size} peers`,
         FONT_OPTIONS
       )
       this.peerStatusText.setOrigin(1, 0)
@@ -310,7 +310,7 @@ class MenuScene extends Scene implements IMenuScene {
     this.multiplayerManager.peerGroup.onConnOpen(() => {
       this.peerStatusText?.setText(
         `connected \nto \
-        ${this.multiplayerManager.playerSessionsContainer.active.size} peers`
+${this.multiplayerManager.playerSessionsContainer.active.size} peers`
       )
     })
   }

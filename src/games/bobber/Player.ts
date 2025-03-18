@@ -76,6 +76,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setTint(
           this.multiplayerConfig?.multiplayerManager?.meNode.initInfo.tint
         )
+        this.setDepth(1)
+        console.log(this.depth, 'hello')
       }
     }
 
@@ -86,7 +88,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.body.setBounce(0.3)
     if (this.multiplayerConfig?.myPeerPlayerConn) {
       // this.body.setAllowGravity(false)
-      this.setDepth(-2)
+   
+      console.log(this.depth)
       // this.meAndPeerGroup.connMe.on('data', (data) => {
       //   this.setX(data?.x)
       //   this.setY(data?.y)
@@ -130,6 +133,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.multiplayerConfig?.myPeerPlayerConn) {
       const myPeerPlayerConn = this.multiplayerConfig?.myPeerPlayerConn
       myPeerPlayerConn.on('data', (data) => {
+        this.setDepth(-4)
         /** @todo use dataManager instead */
         if (data.type === 'handshake') {
           console.log('meow!')
