@@ -42,55 +42,66 @@ export class PeerGroup {
    */
   #openConnections(this: PeerGroup) {
     const peerMe = new Peer({
-      host: '192.168.86.139',
+      host: import.meta.env.VITE_PEER_SERVER_HOST,
       port: 41361,
       path: '/',
+      debug: 3,
     })
     this.peerMe = peerMe
+    peerMe.on('error', (error) => console.error(error))
+    peerMe.on('close', () => console.log('Connection closed'))
+    peerMe.on('disconnected', () => console.log('Disconnected'))
 
     peerMe.on('open', (id) => {
       console.log('My Peer ID is: ' + id)
-    })
 
-    if (!peerMe) {
-      throw new Error(`peerMe is ${peerMe}.`)
-    }
-    let peerIdsNotMe: string[] = []
-
-    peerMe.on('connection', (connIn) => {
-      connIn.on('open', () => {
-        this.openedConnections.push(connIn)
-        this.#onConnOpenHandlers.forEach((h) => h(connIn, 'them'))
-      })
-    })
-
-    peerMe.listAllPeers((peerIds) => {
-      peerIdsNotMe = peerIds.filter((id) => id !== peerMe)
-
-      if (peerIdsNotMe.length) {
-        peerIdsNotMe.forEach((id, index, arr) => {
-          const connOut = peerMe.connect(id)
-
-          // Peer Server waits 5 minutes to remove peers from its list
-          // so some likely are no longer active players. Best I can do
-          // is try to handshake with all peers, then wait 5 seconds
-          // and assume I've got all active players.
-          connOut?.on('open', () => {
-            this.openedConnections.push(connOut)
-
-            console.log(`Connected to Peer (${id}).`)
-            this.#onConnOpenHandlers.forEach((h) => h(connOut, 'me'))
-          })
-
-          if (index === arr.length - 1) {
-            setTimeout(() => {
-              this.#delayForConnectionsToOpenPromiseResolveFunc('shouldBeReady')
-            }, 5000)
-          }
-        })
-      } else {
-        this.#delayForConnectionsToOpenPromiseResolveFunc('shouldBeReady')
+      if (!peerMe) {
+        throw new Error(`peerMe is ${peerMe}.`)
       }
+      let peerIdsNotMe: string[] = []
+
+      peerMe.on('connection', (connIn) => {
+        console.log('connIn from', connIn.peer)
+        connIn.on('open', () => {
+          console.log('connIn OPEN!')
+          this.openedConnections.push(connIn)
+          this.#onConnOpenHandlers.forEach((h) => h(connIn, 'them'))
+        })
+      })
+
+      peerMe.listAllPeers((peerIds) => {
+        peerIdsNotMe = peerIds.filter((id) => id !== peerMe.id)
+
+        if (peerIdsNotMe.length) {
+          peerIdsNotMe.forEach((id, index, arr) => {
+            const connOut = peerMe.connect(id)
+
+            // Peer Server waits 5 minutes to remove peers from its list
+            // so some likely are no longer active players. Best I can do
+            // is try to handshake with all peers, then wait 5 seconds
+            // and assume I've got all active players.
+            console.log('wiating to open to ', id)
+            connOut.on('iceStateChanged', console.log)
+            connOut?.on('error', console.log)
+            connOut?.on('open', () => {
+              this.openedConnections.push(connOut)
+
+              console.log(`Connected to Peer (${id}).`)
+              this.#onConnOpenHandlers.forEach((h) => h(connOut, 'me'))
+            })
+
+            if (index === arr.length - 1) {
+              setTimeout(() => {
+                this.#delayForConnectionsToOpenPromiseResolveFunc(
+                  'shouldBeReady'
+                )
+              }, 5000)
+            }
+          })
+        } else {
+          this.#delayForConnectionsToOpenPromiseResolveFunc('shouldBeReady')
+        }
+      })
     })
   }
 
