@@ -36,6 +36,11 @@ export class MultiplayerManager {
       const sess = new PlayerSession(conn, new InitInfo())
       this.playerSessionsContainer.active.set(conn.peer, sess)
 
+      conn.on('close', () => {
+        this.playerSessionsContainer.active.delete(conn.peer)
+        this.playerSessionsContainer.failed.set(conn.peer, sess)
+      })
+
       const dataManager = new DataManager(conn)
       this.doHandshake(sess)
       dataManager.on('handshake', (data) => {

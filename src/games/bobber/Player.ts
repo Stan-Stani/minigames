@@ -83,12 +83,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     scene.physics.add.existing(this)
 
+    this.multiplayerConfig?.myPeerPlayerConn?.on('close', () => {
+      this.destroy()
+    })
+
     this.body.setSize(10, 14).setOffset(this.body.offset.x, 3)
 
     this.body.setBounce(0.3)
     if (this.multiplayerConfig?.myPeerPlayerConn) {
       // this.body.setAllowGravity(false)
-   
+
       console.log(this.depth)
       // this.meAndPeerGroup.connMe.on('data', (data) => {
       //   this.setX(data?.x)
@@ -186,14 +190,18 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.scene.time.delayedCall(
           5000,
           () => {
-            this.scene.tweens.add({
-              targets: pixel,
-              alpha: { from: 1, to: 0 },
-              duration: 500,
-              onComplete: () => {
-                pixel.destroy()
-              },
-            })
+            // Need this check for handling case where
+            // I've destroyed the Player after they disconnected
+            if (this.scene) {
+              this.scene.tweens.add({
+                targets: pixel,
+                alpha: { from: 1, to: 0 },
+                duration: 500,
+                onComplete: () => {
+                  pixel.destroy()
+                },
+              })
+            }
           },
           [],
           this
@@ -371,6 +379,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   update(_time: number, delta: number) {
+    // Need this check for handling case where
+    // I've destroyed the Player after they disconnected
+    if (!this || !this.body) {
+      return
+    }
     if (this.multiplayerConfig?.myPeerPlayerConn === undefined) {
       this.multiplayerConfig?.multiplayerManager?.meNode.initInfo.tint &&
         this.setTint(

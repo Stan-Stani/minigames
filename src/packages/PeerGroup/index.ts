@@ -30,7 +30,7 @@ export class PeerGroup {
     )
   }
 
-  openedConnections: DataConnection[] = []
+  liveConnections: Map<DataConnection, DataConnection> = new Map()
   #delayForConnectionsToOpenPromiseResolveFunc: (
     value: 'shouldBeReady' | PromiseLike<'shouldBeReady'>
   ) => void
@@ -46,6 +46,7 @@ export class PeerGroup {
       port: 41361,
       path: '/',
       debug: 3,
+      secure: true,
     })
     this.peerMe = peerMe
     peerMe.on('error', (error) => console.error(error))
@@ -64,8 +65,12 @@ export class PeerGroup {
         console.log('connIn from', connIn.peer)
         connIn.on('open', () => {
           console.log('connIn OPEN!')
-          this.openedConnections.push(connIn)
+          this.liveConnections.set(connIn, connIn)
           this.#onConnOpenHandlers.forEach((h) => h(connIn, 'them'))
+        })
+
+        connIn.on('close', () => {
+          this.liveConnections.delete(connIn)
         })
       })
 
@@ -84,10 +89,14 @@ export class PeerGroup {
             connOut.on('iceStateChanged', console.log)
             connOut?.on('error', console.log)
             connOut?.on('open', () => {
-              this.openedConnections.push(connOut)
+              this.liveConnections.set(connOut, connOut)
 
               console.log(`Connected to Peer (${id}).`)
               this.#onConnOpenHandlers.forEach((h) => h(connOut, 'me'))
+            })
+
+            connOut.on('close', () => {
+              this.liveConnections.delete(connOut)
             })
 
             if (index === arr.length - 1) {
@@ -106,7 +115,7 @@ export class PeerGroup {
   }
 
   announce<T>(data: T) {
-    this.openedConnections.forEach((conn) => conn.send(data))
+    this.liveConnections.forEach((conn) => conn.send(data))
   }
 
   shouldBeReadyAsync() {

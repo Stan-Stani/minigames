@@ -308,10 +308,12 @@ ${this.multiplayerManager.playerSessionsContainer.active.size} peers`,
     })
 
     this.multiplayerManager.peerGroup.onConnOpen(() => {
-      this.peerStatusText?.setText(
-        `connected \nto \
+      if (this.scene.isActive()) {
+        this.peerStatusText?.setText(
+          `connected \nto \
 ${this.multiplayerManager.playerSessionsContainer.active.size} peers`
-      )
+        )
+      }
     })
   }
 
