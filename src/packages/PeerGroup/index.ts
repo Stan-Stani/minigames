@@ -45,7 +45,7 @@ export class PeerGroup {
       host: import.meta.env.VITE_PEER_SERVER_HOST,
       port: 41361,
       path: '/',
-      debug: 3,
+      debug: 1,
       secure: true,
     })
     this.peerMe = peerMe
