@@ -2,7 +2,11 @@ import Peer, { DataConnection } from 'peerjs'
 import { PlayerSession } from './PlayerSession'
 import { Tinter } from './Tinter'
 import { PeerGroup } from '../../../packages/PeerGroup'
-import { DataManager, HandshakeDatatype } from './DataManager'
+import {
+  DataManager,
+  HandshakeDatatype,
+  PlayerSnapshotDatatype,
+} from './DataManager'
 import { InitInfo } from './PlayerSession/InitInfo'
 
 export interface PlayerSessionsContainer {
@@ -31,6 +35,7 @@ export class MultiplayerManager {
     failed: new Map<string, PlayerSession>(),
   }
 
+  dataManager: DataManager | null = null
   constructor() {
     this.peerGroup = new PeerGroup((conn, _openedBy) => {
       const sess = new PlayerSession(conn, new InitInfo())
@@ -42,7 +47,8 @@ export class MultiplayerManager {
       })
 
       const dataManager = new DataManager(conn)
-      this.doHandshake(sess)
+      this.dataManager = dataManager
+      this.sendHandshake(sess)
       dataManager.on('handshake', (data) => {
         const sess = this.playerSessionsContainer.active.get(conn.peer)
         if (!sess) {
@@ -81,6 +87,10 @@ export class MultiplayerManager {
           }
         }
       })
+
+      dataManager.on('playerSnapshot', (snapshot) => {
+        console.log({ snapshot })
+      })
     })
 
     this.meNode.peerMe = this.peerGroup.peerMe
@@ -90,8 +100,11 @@ export class MultiplayerManager {
     })
   }
 
-  doHandshake(sess: PlayerSession) {
-    console.log('I send handshake', this.meNode.initInfo.tint)
+  announceSnapshot(snapshot: PlayerSnapshotDatatype) {
+    this.peerGroup.announce(snapshot)
+  }
+
+  sendHandshake(sess: PlayerSession) {
     const data: HandshakeDatatype = {
       type: 'handshake',
       initInfo: this.meNode.initInfo,
@@ -106,7 +119,6 @@ export class MultiplayerManager {
     }
 
     const activePlayerSessions = this.playerSessionsContainer.active
-    console.log({ activePlayerSessions })
     if (this.playerSessionsContainer.active.size >= this.tinter.tints.length) {
       /** @todo */
       // just pick and broadcast a random color

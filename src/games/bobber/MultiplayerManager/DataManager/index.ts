@@ -10,9 +10,13 @@ export interface HandshakeDatatype {
 export interface PlayerSnapshotDatatype {
   type: 'playerSnapshot'
   keyInfo: Player['keyInfo']
+  x: number
+  y: number
+  xVelocity: number
+  yVelocity: number
 }
 
-type Datatype = HandshakeDatatype | PlayerSnapshotDatatype
+export type Datatype = HandshakeDatatype | PlayerSnapshotDatatype
 
 interface EventMap {
   handshake: HandshakeDatatype
@@ -32,6 +36,8 @@ export class DataManager {
         this.playerSnapShotEventHandlers.forEach((eH) => {
           eH(data)
         })
+      } else {
+        debugger
       }
     })
   }
@@ -57,6 +63,25 @@ export class DataManager {
           break
       }
     }
+  }
+
+  static extractSnapshot(player: Player): PlayerSnapshotDatatype {
+    /** https://stackoverflow.com/questions/17781472/how-to-get-a-subset-of-a-javascript-objects-properties */
+    return (({
+      keyInfo,
+      x,
+      y,
+      body: {
+        velocity: { x: xVelocity, y: yVelocity },
+      },
+    }) => ({
+      type: 'playerSnapshot',
+      keyInfo,
+      x,
+      y,
+      xVelocity,
+      yVelocity,
+    }))(player)
   }
 
   static isHandShakeDatatype(datatype: any): datatype is HandshakeDatatype {
