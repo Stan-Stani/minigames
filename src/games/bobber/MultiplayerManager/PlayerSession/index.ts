@@ -1,4 +1,5 @@
 import { DataConnection } from 'peerjs'
+import { InitInfo } from './InitInfo'
 
 interface HasInitInfo {
   initInfo: InitInfo
@@ -27,6 +28,7 @@ export class PlayerSession implements DPlayerSession {
       this.connection = connectionOrDuck.connection
       this.initInfo = connectionOrDuck.initInfo
     } else {
+      
       this.connection = connectionOrDuck as DataConnection
       if (initInfo !== undefined) {
         this.initInfo = initInfo

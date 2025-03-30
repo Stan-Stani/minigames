@@ -35,11 +35,29 @@ export class MultiplayerManager {
     failed: new Map<string, PlayerSession>(),
   }
 
+  static instantiationCount = 0
+
   dataManager: DataManager | null = null
   constructor() {
+    if (MultiplayerManager.instantiationCount > 0) {
+      debugger
+      throw new Error('More than one instantiation of MultiplayerManager.')
+    }
+    console.count('Multiplayer Manager instantiation begun')
+    MultiplayerManager.instantiationCount++
     this.peerGroup = new PeerGroup((conn, _openedBy) => {
       const sess = new PlayerSession(conn, new InitInfo())
+      console.log('Adding remote to active!', conn.peer)
       this.playerSessionsContainer.active.set(conn.peer, sess)
+      /** @todo call callbacks that depend on our playerSessionsContainer
+       * (basically our connections) to be populated
+       * Or return a promise?
+       */
+      console.log('adding peer', conn.peer)
+      console.log(
+        'active peers from multiplayer manager',
+        this.playerSessionsContainer.active
+      )
 
       conn.on('close', () => {
         this.playerSessionsContainer.active.delete(conn.peer)
@@ -61,7 +79,6 @@ export class MultiplayerManager {
         }
 
         if (this.meNode.state?.type === 'wait_for_tint_turn') {
-          console.log('hey')
           const indexWhoAnnouncedColor =
             this.meNode.state.ascendingColorlessByJoinTime.findIndex(
               ([id, _sess]) => {
@@ -95,9 +112,14 @@ export class MultiplayerManager {
 
     this.meNode.peerMe = this.peerGroup.peerMe
 
-    this.peerGroup.shouldBeReadyAsync().then(() => {
-      this.establishTint()
-    })
+    this.peerGroup
+      .shouldBeReadyAsync()
+      .then(() => {
+        this.establishTint()
+      })
+      .catch((error) => {
+        throw error
+      })
   }
 
   announceSnapshot(snapshot: PlayerSnapshotDatatype) {
@@ -132,13 +154,13 @@ export class MultiplayerManager {
         new PlayerSession({} as DataConnection, this.meNode.initInfo),
       ])
       const colorlessIncludingMe = colorlessSessions
+      console.log({ colorlessIncludingMe })
       const ascendingColorlessByJoinTime = colorlessIncludingMe.sort(
         ([_keyA, valueA], [_keyB, valueB]) => {
           if (
             valueA.initInfo.timestamp === null ||
             valueB.initInfo.timestamp === null
           ) {
-            debugger
             throw new Error(`Sess timestamps should not be null.`)
           }
 

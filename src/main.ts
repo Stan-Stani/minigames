@@ -163,7 +163,7 @@ interface IMenuScene {
 }
 
 class MenuScene extends Scene implements IMenuScene {
-  multiplayerManager = new MultiplayerManager()
+  multiplayerManager: MultiplayerManager | null = null
 
   toggleToScene = (sceneIndicator: Parameters<typeof this.scene.start>[0]) => {
     this.scene.stop()
@@ -296,22 +296,28 @@ class MenuScene extends Scene implements IMenuScene {
   // https://newdocs.phaser.io/docs/3.55.2/Phaser.Tilemaps.TilemapLayer#putTilesAt
 
   preload() {
-    this.multiplayerManager.peerGroup.shouldBeReadyAsync().then(() => {
+    if (!this.registry.get('multiplayerManager')) {
+      this.multiplayerManager = new MultiplayerManager()
+      this.registry.set({ multiplayerManager: this.multiplayerManager })
+    } else {
+      this.multiplayerManager = this.registry.get('multiplayerManager')
+    }
+    this.multiplayerManager?.peerGroup.shouldBeReadyAsync().then(() => {
       this.peerStatusText = this.add.text(
         (WIDTH / 10) * 9,
         (GAME_HEIGHT / 10) * 7,
         `connected \nto \
-${this.multiplayerManager.playerSessionsContainer.active.size} peers`,
+${this.multiplayerManager?.playerSessionsContainer.active.size} peers`,
         FONT_OPTIONS
       )
       this.peerStatusText.setOrigin(1, 0)
     })
 
-    this.multiplayerManager.peerGroup.onConnOpen(() => {
+    this.multiplayerManager?.peerGroup.onConnOpen(() => {
       if (this.scene.isActive()) {
         this.peerStatusText?.setText(
           `connected \nto \
-${this.multiplayerManager.playerSessionsContainer.active.size} peers`
+${this.multiplayerManager?.playerSessionsContainer.active.size} peers`
         )
       }
     })
@@ -354,7 +360,9 @@ ${this.multiplayerManager.playerSessionsContainer.active.size} peers`
     return builtMenu
   }
   create() {
-    this.registry.set({ multiplayerManager: this.multiplayerManager })
+    if (!this.registry.get('multiplayerManager')) {
+      this.registry.set({ multiplayerManager: this.multiplayerManager })
+    }
     this.mainMenu = this.setUpMenu(this.mainMenuSeed, true)
     this.settingsMenu = this.setUpMenu(this.settingsMenuSeed, false)
   }

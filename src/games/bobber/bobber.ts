@@ -40,6 +40,8 @@ export class BobberScene extends Scene {
   initialSpawn?: spawnLocation
   isRunning = false
   teleportDestination = BobberScene.teleportCheat?.slice(1) as [number, number]
+  winText: GameObjects.Text | null = null
+  sceneStartTime = 0
 
   makeBuoyComposite(x: number, y: number) {
     if (!this.platforms) {
@@ -98,6 +100,7 @@ export class BobberScene extends Scene {
     this.load.image('background1', './bobber/background1.png')
     this.load.image('player', './bobber/player.png')
     this.load.image('enemy', './enemy.png')
+    this.load.image('flag', './bobber/entities/flag.png')
     this.load.aseprite({
       key: 'buoy',
       textureURL: './bobber/entities/buoy.png',
@@ -119,7 +122,13 @@ export class BobberScene extends Scene {
   }
 
   create() {
-    this.multiplayerManager = this.registry.get('multiplayerManager')
+    this.sceneStartTime = this.time.now
+    if (!this.registry.get('multiplayerManager')) {
+      this.multiplayerManager = new MultiplayerManager()
+      this.registry.set({ multiplayerManager: this.multiplayerManager })
+    } else {
+      this.multiplayerManager = this.registry.get('multiplayerManager')
+    }
     this.scene.launch('BobberInputScene')
     this.#timerText = this.add.text(WIDTH * 0.8, HEIGHT * 0.05, '00', {
       fontSize: `10px`,
@@ -138,6 +147,7 @@ export class BobberScene extends Scene {
 
     const spawnLayer = map.getObjectLayer('Spawn')
     const textLayer = map.getObjectLayer('text')
+    const signageLayer = map.getObjectLayer('signage')
 
     if (textLayer && textLayer.objects) {
       // Iterate through all objects in the layer
@@ -155,9 +165,7 @@ export class BobberScene extends Scene {
             y: object.y,
             text: object.text.text, // The actual text content
             style: {
-              font:
-                object.text.pixelsize ??
-                '16' + 'px ' + (object.text.fontfamily || 'Arial'),
+              font: (object.text.pixelsize ?? '16') + 'px ' + 'gameboy',
               color: object.text.color || '#000000',
               align: object.text.halign || 'center',
             },
@@ -177,6 +185,9 @@ export class BobberScene extends Scene {
           } else if (object.text.halign === 'right') {
             textObject.setOrigin(1, 0)
           }
+
+          textObject.setVisible(false)
+          this.winText = textObject
         }
       })
     }
@@ -209,6 +220,45 @@ export class BobberScene extends Scene {
         multiplayerManager: this.multiplayerManager,
       })
 
+      if (signageLayer && signageLayer.objects) {
+        signageLayer.objects.forEach((flagObject) => {
+          if (flagObject.x && flagObject.y) {
+            const flag = this.physics.add.sprite(
+              flagObject?.x,
+              flagObject?.y,
+              'flag'
+            )
+            flag.setImmovable(true)
+            flag.body.setAllowGravity(false)
+            flag.setOrigin(0, 1)
+
+            if (this.playerOne) {
+              const overlap = this.physics.add.overlap(
+                flag,
+                this.playerOne,
+                () => {
+                  if (!this.playerOne) {
+                    return
+                  }
+
+                  this.winText?.setVisible(true)
+
+                  // activationParticles.play({
+                  //   key: 'default',
+                  //   hideOnComplete: true,
+                  //   showOnStart: true,
+                  // })
+
+                  // this.playerOne.respawnDestination = [x, y]
+
+                  overlap.destroy()
+                }
+              )
+            }
+          }
+        })
+      }
+
       if (!this.initialSpawn) throw new Error()
 
       this.multiplayerManager?.playerSessionsContainer.active.forEach(
@@ -223,16 +273,33 @@ export class BobberScene extends Scene {
       )
 
       // Handle player joining while bobber game is running
-      this.multiplayerManager?.meNode.peerMe?.on('connection', (connIn) => {
-        connIn.on('open', () => {
-          this.peerPlayerArr?.push(
-            new Player(this, {
-              multiplayerManager: this.multiplayerManager,
-              myPeerPlayerConn: connIn,
+
+      /** @todo Fix peerJs race condition when trying to start game
+       * up in Bobber game immediately. Below doesn't completely
+       * resolve the problem. Basically I need to make sure 
+       * that nothing is listening directly to the Peer but instead
+       * MultiplayerManager ensures its logic happens before 
+       * the open event triggers initialization of a player.
+       * 
+       * See line 52 of MultiplayerManager
+       */
+      // This delay is a hack but it's currently necessary, otherwise
+      // the network Player gets initialized before the session is added
+      // to the active map, when the player ends up in
+      // Bobber game via url param.
+      this.multiplayerManager?.peerGroup.shouldBeReadyAsync().then(
+        () =>
+          this.multiplayerManager?.meNode.peerMe?.on('connection', (connIn) => {
+            connIn.on('open', () => {
+              this.peerPlayerArr?.push(
+                new Player(this, {
+                  multiplayerManager: this.multiplayerManager,
+                  myPeerPlayerConn: connIn,
+                })
+              )
             })
-          )
-        })
-      })
+          })
+      )
 
       checkpoints.forEach((cp) => {
         this.makeBuoyComposite(cp.x, cp.y)
@@ -346,38 +413,17 @@ export class BobberScene extends Scene {
       pixelWidth: 1,
       pixelHeight: 1,
     })
-
-    // const onHitBottom = (gameObject: any) => {
-    //   // This function will be called when the pixel hits the bottom side of world bounds or another object
-
-    //   // Perform any additional logic here, such as playing a sound or changing the game state
-
-    //   // Create a physics sprite using the 'pixel' texture
-    //   for (let i = 0; i < 10; i++) {
-    //     // Create a physics sprite using the 'pixel' texture at random positions
-    //     let x = Phaser.Math.Between(0, WIDTH)
-    //     let y = Phaser.Math.Between(0, HEIGHT)
-    //     let pixel = this.physics.add.sprite(x, y, 'pixel')
-
-    //     // Set properties on the physics body, if desired
-    //     pixel.body.setCollideWorldBounds(true)
-    //     pixel.body.setBounce(0.5)
-    //     pixel.body.setVelocity(
-    //       Phaser.Math.Between(-200, 200),
-    //       Phaser.Math.Between(-200, 200)
-    //     )
-    //   }
-    // }
   }
 
+  // time ends up being since initial scene loaded
   update(time: number, delta: number) {
-    const fullSeconds = Math.floor(time / 1000)
+    const fullSeconds = Math.floor((time - this.sceneStartTime) / 1000)
     const fullMinutes = Math.floor(fullSeconds / 60)
     const remainderSeconds = fullSeconds % 60
     const timeString = `${fullMinutes}:${
       remainderSeconds < 10 ? '0' + remainderSeconds : remainderSeconds
     }`
-    this.#timerText?.setText(timeString)
+    !this.winText?.visible && this.#timerText?.setText(timeString)
     this.#timerText?.setScrollFactor(0)
     stickyMessage(
       'playerOne Net Gravity:',

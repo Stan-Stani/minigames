@@ -62,10 +62,23 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this)
 
     if (this.multiplayerConfig?.myPeerPlayerConn) {
+      console.log('attempting to initialize player')
+    }
+
+    if (this.multiplayerConfig?.myPeerPlayerConn) {
+      if (!this.multiplayerConfig.multiplayerManager) {
+        debugger
+      }
       const myPlayerSession =
         this.multiplayerConfig?.multiplayerManager?.playerSessionsContainer.active.get(
           this.multiplayerConfig.myPeerPlayerConn.peer
         )
+      console.log(
+        'peer trying to add',
+        this.multiplayerConfig.myPeerPlayerConn.peer,
+        this.multiplayerConfig
+      )
+
       if (!myPlayerSession) {
         throw new Error(`myPlayerSession is ${myPlayerSession}`)
       }
@@ -74,10 +87,18 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     } else {
       if (this.multiplayerConfig?.multiplayerManager?.meNode.initInfo.tint) {
-        this.setTint(
-          this.multiplayerConfig?.multiplayerManager?.meNode.initInfo.tint
-        )
-        this.setDepth(1)
+        // Don't set tint until/unless another player connects
+        if (
+          (this.multiplayerConfig?.multiplayerManager?.playerSessionsContainer
+            ?.active?.size ?? 0) > 0
+        ) {
+          this.multiplayerConfig?.multiplayerManager?.meNode.initInfo.tint &&
+            this.setTint(
+              this.multiplayerConfig?.multiplayerManager?.meNode.initInfo.tint
+            )
+        }
+
+        this.setDepth(-4)
         console.log(this.depth, 'hello')
       }
     }
@@ -394,7 +415,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (!this || !this.body) {
       return
     }
-    if (this.multiplayerConfig?.myPeerPlayerConn === undefined) {
+
+    // Don't set tint until/unless another player connects
+    if (
+      this.multiplayerConfig?.myPeerPlayerConn === undefined &&
+      (this.multiplayerConfig?.multiplayerManager?.playerSessionsContainer
+        ?.active?.size ?? 0) > 0
+    ) {
       this.multiplayerConfig?.multiplayerManager?.meNode.initInfo.tint &&
         this.setTint(
           this.multiplayerConfig?.multiplayerManager?.meNode.initInfo.tint
