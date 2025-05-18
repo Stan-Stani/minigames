@@ -135,6 +135,7 @@ export class BobberScene extends Scene {
       color: '#FFF',
       fontFamily: 'gameboy',
     })
+    this.#timerText.setDepth(9001)
 
     const background = this.add.image(0, 0, 'background1')
     background.setOrigin(0, 0).setDepth(-4).setScrollFactor(0)

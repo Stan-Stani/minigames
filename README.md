@@ -14,3 +14,4 @@ https://stan-stani.github.io/minigames/
         sent snapshot
     - Rarely, a player might not connect with all the currently 
     connected peers.
+    
