@@ -14,4 +14,5 @@ https://stan-stani.github.io/minigames/
         sent snapshot
     - Rarely, a player might not connect with all the currently 
     connected peers.
-    
+    - Network players aren't shown in their actual positions until they move
+    after the client player has connected
