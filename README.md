@@ -3,8 +3,14 @@
 ## Live App
 https://stan-stani.github.io/minigames/
 
-- TODO
-- Choose random color if all tints are in use
-- clean up multiplayer code
-- handle removing peers that haven't talked in a while
+### Bobber
 
+#### Known Bugs
+
+    - Very rarely a player will fall upwards when bobbing and 
+    get killed at top of the map
+        - That also happens to network players more often but
+        they don't actually die and will reappear on the next
+        sent snapshot
+    - Rarely, a player might not connect with all the currently 
+    connected peers.
