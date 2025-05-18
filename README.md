@@ -5,6 +5,10 @@ https://stan-stani.github.io/minigames/
 
 ### Bobber
 
+#### ToDo
+
+    - Make mobile interface clearer; that is, make controls look like controls!
+
 #### Known Bugs
 
     - Very rarely a player will fall upwards when bobbing and 
