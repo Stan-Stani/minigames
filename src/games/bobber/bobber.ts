@@ -272,34 +272,39 @@ export class BobberScene extends Scene {
         }
       )
 
-      // Handle player joining while bobber game is running
-
-      /** @todo Fix peerJs race condition when trying to start game
-       * up in Bobber game immediately. Below doesn't completely
-       * resolve the problem. Basically I need to make sure 
-       * that nothing is listening directly to the Peer but instead
-       * MultiplayerManager ensures its logic happens before 
-       * the open event triggers initialization of a player.
-       * 
-       * See line 52 of MultiplayerManager
+      /**
+       * @section A
+       *  I don't like how I'm having to manually handle
+       * initializing players here. It feels like it should be
+       * something that happens not explicitly in this scene, but
+       * maybe I just need to extract the below to a method on the
+       * Multiplayer Manager?
        */
-      // This delay is a hack but it's currently necessary, otherwise
-      // the network Player gets initialized before the session is added
-      // to the active map, when the player ends up in
-      // Bobber game via url param.
-      this.multiplayerManager?.peerGroup.shouldBeReadyAsync().then(
-        () =>
-          this.multiplayerManager?.meNode.peerMe?.on('connection', (connIn) => {
-            connIn.on('open', () => {
-              this.peerPlayerArr?.push(
-                new Player(this, {
-                  multiplayerManager: this.multiplayerManager,
-                  myPeerPlayerConn: connIn,
-                })
-              )
-            })
+      // Handle player joining while bobber game is running
+      console.log('attaching peer initializer to peerGroup')
+      this.multiplayerManager?.peerGroup.onConnOpen((conn) => {
+        this.peerPlayerArr?.push(
+          new Player(this, {
+            multiplayerManager: this.multiplayerManager,
+            myPeerPlayerConn: conn,
           })
-      )
+        )
+      })
+
+      console.log('iterating over existing connections to add players')
+      this.multiplayerManager?.playerSessionsContainer.active.forEach((ps) => {
+        console.log(
+          'loading peer that was already connected before my game started'
+        )
+        this.peerPlayerArr?.push(
+          new Player(this, {
+            multiplayerManager: this.multiplayerManager,
+            myPeerPlayerConn: ps.connection,
+          })
+        )
+      })
+
+      /** @endSection A */
 
       checkpoints.forEach((cp) => {
         this.makeBuoyComposite(cp.x, cp.y)
@@ -344,20 +349,6 @@ export class BobberScene extends Scene {
       pixelWidth: WIDTH,
       pixelHeight: 10,
     })
-
-    // this.#generatedPlatforms = [
-    //   this.physics.add
-    //     .staticImage(0, HEIGHT, 'ground')
-    //     .setOrigin(0, 1)
-    //     .refreshBody(),
-
-    //   this.physics.add
-    //     .staticImage(50, HEIGHT - 30, 'ground')
-    //     .setOrigin(0, 1)
-    //     .refreshBody(),
-    // ]
-
-    // this.cameras.main.setDeadzone(400, 200);
 
     const handleInputs = () => {
       try {

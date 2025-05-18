@@ -21,7 +21,6 @@ export function stickyMessage(...messages: any) {
   }
 
   if (!stackToDivMap[identifier]) {
-    console.log('s')
     // Create a new div for this identifier
     let newDiv = document.createElement('div')
     newDiv.textContent = prettyMessages.join(' ')

@@ -8,6 +8,7 @@ import Peer, { DataConnection } from 'peerjs'
 
 import { MultiplayerManager } from './games/bobber/MultiplayerManager'
 
+
 interface IMenuItemSeed {
   id?: string
   text: string

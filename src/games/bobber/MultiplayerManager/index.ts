@@ -16,6 +16,16 @@ export interface PlayerSessionsContainer {
   failed: Map<string, PlayerSession>
 }
 
+/**
+ * @todo
+ * When I add more games, I'll need a custom init function for
+ * each type of game if it has multiplayer, a way to manage and only talk to
+ * peers that are in the same game, and if it doesn't have multiplayer
+ * I probably want to just kill the multiplayer manager or
+ * close all connections until I return
+ * to the menu scene. It'd be a lot simpler if I wasn't trying to 
+ * setup multiplayer connections in the menu scene.
+ */
 export class MultiplayerManager {
   /** Represents the "Peer"/Player that lives on this device.  */
   meNode: {
