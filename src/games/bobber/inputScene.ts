@@ -6,39 +6,67 @@ export class BobberInputScene extends Scene {
     super('BobberInputScene')
   }
 
+  preload() {
+    this.load.aseprite({
+      key: 'inputArrow',
+      textureURL: './input/inputArrowAlt.png',
+      atlasURL: './input/inputArrowAlt.json',
+    })
+  }
+
   create() {
+    const leftMobileInput = this.add.sprite(0, 240, 'inputArrow')
+    this.anims.createFromAseprite('inputArrow', undefined, leftMobileInput)
     const BobberScene = this.scene.get<BobberScene>('BobberScene')
-    const LeftMobileInput = this.add.rectangle(0, 240, 50, 50, 0xff0000)
-    LeftMobileInput.setOrigin(0, 0)
-    LeftMobileInput.setInteractive()
-    LeftMobileInput.on(
-      'pointerdown',
-      () => BobberScene.playerOne?.leftButtonDown()
-    )
-    LeftMobileInput.on('pointerup', () => BobberScene.playerOne?.leftButtonUp())
-    LeftMobileInput.on('pointerout', () => BobberScene.playerOne?.leftButtonUp())
-    const RightMobileInput = this.add.rectangle(50, 240, 50, 50, 0x0000ff)
-    RightMobileInput.setOrigin(0, 0)
-    RightMobileInput.setInteractive()
-    RightMobileInput.on(
-      'pointerdown',
-      () => BobberScene.playerOne?.rightButtonDown()
-    )
-    RightMobileInput.on(
-      'pointerup',
-      () => BobberScene.playerOne?.rightButtonUp()
-    )
-    RightMobileInput.on(
-      'pointerout',
-      () => BobberScene.playerOne?.rightButtonUp()
-    )
-    const DiveMobileInput = this.add.rectangle(206, 240, 50, 50, 0x00ffff)
-    DiveMobileInput.setOrigin(0, 0)
-    DiveMobileInput.setInteractive()
-    DiveMobileInput.on(
-      'pointerdown',
-      () => BobberScene.playerOne?.diveButtonDown()
-    )
-    DiveMobileInput.on('pointerup', () => BobberScene.playerOne?.diveButtonUp())
+    leftMobileInput.setOrigin(0, 0)
+    leftMobileInput.setInteractive()
+    leftMobileInput.on('pointerdown', () => {
+      BobberScene.playerOne?.leftButtonDown()
+      leftMobileInput.setFrame(1)
+    })
+    leftMobileInput.on('pointerup', () => {
+      BobberScene.playerOne?.leftButtonUp()
+      leftMobileInput.setFrame(0)
+    })
+    leftMobileInput.on('pointerout', () => {
+      BobberScene.playerOne?.leftButtonUp()
+      leftMobileInput.setFrame(0)
+    })
+    const rightMobileInput = this.add.sprite(50, 240, 'inputArrow')
+    rightMobileInput.setFlipX(true)
+    this.anims.createFromAseprite('inputArrow', undefined, rightMobileInput)
+    rightMobileInput.setOrigin(0, 0)
+
+    rightMobileInput.setInteractive()
+    rightMobileInput.on('pointerdown', () => {
+      BobberScene.playerOne?.rightButtonDown()
+      rightMobileInput.setFrame(1)
+    })
+    rightMobileInput.on('pointerup', () => {
+      BobberScene.playerOne?.rightButtonUp()
+      rightMobileInput.setFrame(0)
+    })
+    rightMobileInput.on('pointerout', () => {
+      BobberScene.playerOne?.rightButtonUp()
+      rightMobileInput.setFrame(0)
+    })
+    
+
+    const downMobileInput = this.add.sprite(206, 240, 'inputArrow')
+    downMobileInput.setAngle(-90)
+    // Still want origin in upper left of sprite from player's perspective
+    downMobileInput.setOrigin(1, 0)
+    downMobileInput.setPosition(206, 240)
+    this.anims.createFromAseprite('inputArrow', undefined, rightMobileInput)
+
+    downMobileInput.setInteractive()
+    downMobileInput.on('pointerdown', () => {
+      BobberScene.playerOne?.diveButtonDown()
+      downMobileInput.setFrame(1)
+    })
+    downMobileInput.on('pointerup', () => {
+      BobberScene.playerOne?.diveButtonUp()
+      downMobileInput.setFrame(0)
+    })
   }
 }
