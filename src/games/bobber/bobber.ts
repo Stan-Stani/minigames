@@ -172,6 +172,9 @@ export class BobberScene extends Scene {
             },
           }
 
+          if (!textConfig.x || !textConfig.y) {
+            throw new Error('Text needs to have x and y properties.')
+          }
           // Create the text object in Phaser
           const textObject = this.add.text(
             textConfig.x,
