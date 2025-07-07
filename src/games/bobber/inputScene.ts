@@ -68,5 +68,9 @@ export class BobberInputScene extends Scene {
       BobberScene.playerOne?.diveButtonUp()
       downMobileInput.setFrame(0)
     })
+    downMobileInput.on('pointerout', () => {
+      BobberScene.playerOne?.diveButtonUp()
+      downMobileInput.setFrame(0)
+    })
   }
 }
