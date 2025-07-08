@@ -9,6 +9,7 @@ import { Player } from './Player'
 import { PeerGroup } from '../../packages/PeerGroup'
 import { ConnectionType } from 'peerjs'
 import { MultiplayerManager } from './MultiplayerManager'
+import { RaceProgressBar } from './RaceProgressBar'
 const WIDTH = 256
 const HEIGHT = 240
 const GRAVITY = 128
@@ -42,6 +43,7 @@ export class BobberScene extends Scene {
   teleportDestination = BobberScene.teleportCheat?.slice(1) as [number, number]
   winText: GameObjects.Text | null = null
   sceneStartTime = 0
+  raceProgressBar?: RaceProgressBar
 
   makeBuoyComposite(x: number, y: number) {
     if (!this.platforms) {
@@ -235,6 +237,11 @@ export class BobberScene extends Scene {
             flag.setImmovable(true)
             flag.body.setAllowGravity(false)
             flag.setOrigin(0, 1)
+
+            this.raceProgressBar = new RaceProgressBar(this, {
+              startX: playerSpawn.x,
+              endX: flagObject?.x,
+            })
 
             if (this.playerOne) {
               const overlap = this.physics.add.overlap(
@@ -430,6 +437,7 @@ export class BobberScene extends Scene {
     if (!this.playerOne || !this.initialSpawn) return
 
     this.playerOne.update(time, delta)
+    this.raceProgressBar?.updatePosition(this.playerOne.x)
     this.peerPlayerArr?.forEach((p) => {
       p.update(time, delta)
     })
