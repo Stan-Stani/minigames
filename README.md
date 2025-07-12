@@ -10,8 +10,6 @@ https://stan-stani.github.io/minigames/
 
     - Improve race progress bar positioning
     - Add flag icon to indicate finish at end of bar
-    - Integrate race progress bar with peers and their colors
-        - Ensure local player's indicator is always on top
 
 #### Known Bugs
 
