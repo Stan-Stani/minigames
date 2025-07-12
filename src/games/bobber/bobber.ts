@@ -437,7 +437,7 @@ export class BobberScene extends Scene {
     if (!this.playerOne || !this.initialSpawn) return
 
     this.playerOne.update(time, delta)
-    this.raceProgressBar?.updatePosition(this.playerOne.x)
+    
     this.peerPlayerArr?.forEach((p) => {
       p.update(time, delta)
     })

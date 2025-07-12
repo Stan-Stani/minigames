@@ -40,6 +40,7 @@ export interface Player
   respawnedPreviousFrame?: boolean
   respawnDestination?: [number, number]
   teleportDestination?: [number, number]
+  myTint: number | undefined
 }
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
@@ -84,6 +85,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
       if (myPlayerSession.initInfo.tint) {
         this.setTint(myPlayerSession.initInfo.tint)
+        this.myTint = myPlayerSession.initInfo.tint
       }
     } else {
       if (this.multiplayerConfig?.multiplayerManager?.meNode.initInfo.tint) {
@@ -99,7 +101,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
         this.setDepth(-4)
-        console.log(this.depth, 'hello')
       }
     }
 
@@ -112,15 +113,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.body.setSize(10, 14).setOffset(this.body.offset.x, 3)
 
     this.body.setBounce(0.3)
-    if (this.multiplayerConfig?.myPeerPlayerConn) {
-      // this.body.setAllowGravity(false)
-
-      console.log(this.depth)
-      // this.meAndPeerGroup.connMe.on('data', (data) => {
-      //   this.setX(data?.x)
-      //   this.setY(data?.y)
-      // })
-    }
     this.brakingInfo = {
       isBraking: false,
       directionBeforeBraking: undefined,
@@ -184,14 +176,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
       this.multiplayerConfig.multiplayerManager?.dataManager?.on(
         'handshake',
-        (handshake) =>
+        (handshake) => {
           handshake.initInfo.tint && this.setTint(handshake.initInfo.tint)
+          this.myTint = handshake.initInfo.tint ?? undefined
+        }
       )
       const myPeerPlayerConn = this.multiplayerConfig?.myPeerPlayerConn
       myPeerPlayerConn.on('data', (data) => {
         // Can't figure out how to get network players to be behind local
         // player other than this
         this.setDepth(-4)
+        this.scene.raceProgressBar?.playerToIndicatorMap.get(this)?.setDepth(-3)
       })
     }
 
@@ -426,6 +421,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setTint(
           this.multiplayerConfig?.multiplayerManager?.meNode.initInfo.tint
         )
+      this.myTint =
+        this.multiplayerConfig?.multiplayerManager?.meNode.initInfo.tint ??
+        undefined
     }
 
     if (this.keyInfo.right && this.body.acceleration.x > 0) {
@@ -579,6 +577,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setHorizontalAcceleration('left')
       }
     }
+
+    this.scene.raceProgressBar?.updatePosition(this)
   }
 
   getTileAtBottomOfSprite(
