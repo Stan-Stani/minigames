@@ -104,7 +104,7 @@
                 {
                  "height":76,
                  "id":29,
-                 "name":"",
+                 "name":"win",
                  "rotation":0,
                  "text":
                     {
@@ -117,6 +117,24 @@
                  "width":176.716,
                  "x":2753.72,
                  "y":103.386
+                }, 
+                {
+                 "height":113,
+                 "id":32,
+                 "name":"instructions",
+                 "rotation":0,
+                 "text":
+                    {
+                     "halign":"center",
+                     "text":" \"A\"    \"D\" \n\u25c0        \u25b6\n\n\"SPACE\"\n\u25bc",
+                     "valign":"center",
+                     "wrap":true
+                    },
+                 "type":"",
+                 "visible":true,
+                 "width":80,
+                 "x":57.5,
+                 "y":23.5
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -230,8 +248,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":9,
- "nextobjectid":30,
+ "nextlayerid":10,
+ "nextobjectid":33,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.10.2",
