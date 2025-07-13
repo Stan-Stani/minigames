@@ -158,9 +158,9 @@ export class BobberScene extends Scene {
       // Iterate through all objects in the layer
       textLayer.objects.forEach((object) => {
         // Check if this is a text object (text objects in Tiled have a 'text' property)
-        if (object.text) {
+        if (object.text && object.name === 'win') {
           // Create text properties from the Tiled object
-          const textConfig: {
+          const winTextConfig: {
             x: number | undefined
             y: number | undefined
             text: any
@@ -176,26 +176,78 @@ export class BobberScene extends Scene {
             },
           }
 
-          if (!textConfig.x || !textConfig.y) {
+          if (!winTextConfig.x || !winTextConfig.y) {
             throw new Error('Text needs to have x and y properties.')
           }
           // Create the text object in Phaser
-          const textObject = this.add.text(
-            textConfig.x,
-            textConfig.y,
-            textConfig.text,
-            textConfig.style
+          const winText = this.add.text(
+            winTextConfig.x,
+            winTextConfig.y,
+            winTextConfig.text,
+            winTextConfig.style
           )
 
           // Handle text alignment and origin
           if (object.text.halign === 'center') {
-            textObject.setOrigin(0.5, 0)
+            winText.setOrigin(0.5, 0)
           } else if (object.text.halign === 'right') {
-            textObject.setOrigin(1, 0)
+            winText.setOrigin(1, 0)
           }
 
-          textObject.setVisible(false)
-          this.winText = textObject
+          winText.setVisible(false)
+          this.winText = winText
+
+          // Handle text alignment and origin
+          if (object.text.halign === 'center') {
+            winText.setOrigin(0.5, 0)
+          } else if (object.text.halign === 'right') {
+            winText.setOrigin(1, 0)
+          }
+
+          winText.setVisible(false)
+          this.winText = winText
+        } else if (object.name === 'instructions') {
+          // Create text properties from the Tiled object
+          const instructionTextConfig: {
+            x: number | undefined
+            y: number | undefined
+            text: any
+            style: Phaser.Types.GameObjects.Text.TextStyle
+          } = {
+            x: object.x,
+            y: object.y,
+            text: object.text.text, // The actual text content
+            style: {
+              // font: (object.text.pixelsize ?? '16') + 'px ' + 'monospace',
+              color: object.text.color || '#000000',
+              align: object.text.halign || 'center',
+            },
+          }
+
+          if (!instructionTextConfig.x || !instructionTextConfig.y) {
+            throw new Error('Text needs to have x and y properties.')
+          }
+          // Create the text object in Phaser
+          const instructionText = this.add.text(
+            instructionTextConfig.x,
+            instructionTextConfig.y,
+            instructionTextConfig.text,
+            instructionTextConfig.style
+          )
+
+          // Handle text alignment and origin
+          if (object.text.halign === 'center') {
+            instructionText.setOrigin(0.5, 0)
+          } else if (object.text.halign === 'right') {
+            instructionText.setOrigin(1, 0)
+          }
+
+          // Handle text alignment and origin
+          if (object.text.halign === 'center') {
+            instructionText.setOrigin(0.5, 0)
+          } else if (object.text.halign === 'right') {
+            instructionText.setOrigin(1, 0)
+          }
         }
       })
     }
@@ -439,7 +491,7 @@ export class BobberScene extends Scene {
     if (!this.playerOne || !this.initialSpawn) return
 
     this.playerOne.update(time, delta)
-    
+
     this.peerPlayerArr?.forEach((p) => {
       p.update(time, delta)
     })
