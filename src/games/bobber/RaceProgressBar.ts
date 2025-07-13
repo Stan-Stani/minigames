@@ -1,10 +1,11 @@
 import { Scene } from 'phaser'
 import { Player } from './Player'
+import BobberScene from './bobber'
 
 const BAR_START_X = 5
 const BAR_WIDTH = 190
 export class RaceProgressBar {
-  #scene: Scene
+  #scene: BobberScene
   #startX: number
   #endX: number
   readonly playerToIndicatorMap = new Map<
@@ -13,7 +14,7 @@ export class RaceProgressBar {
   >()
 
   constructor(
-    scene: Scene,
+    scene: BobberScene,
     { startX, endX }: { startX: number; endX: number }
   ) {
     this.#scene = scene
@@ -24,7 +25,14 @@ export class RaceProgressBar {
     graphicsLine.fillStyle(0xffffff, 1.0)
     graphicsLine.fillRect(BAR_START_X, 10, BAR_WIDTH, 3)
     graphicsLine.scrollFactorX = 0
-    graphicsLine.setDepth(-4)
+    graphicsLine.setDepth(4)
+
+    const flag = this.#scene.add.sprite(
+      BAR_START_X + BAR_WIDTH + 5,
+      10,
+      'flagIcon'
+    )
+    flag.scrollFactorX = 0
   }
 
   tryInitializePlayerIndicator(player: Player) {
@@ -44,8 +52,10 @@ export class RaceProgressBar {
       circleTexture.setPosition(50, 10)
       circleTexture.scrollFactorX = 0
       circleTexture.setTint(0xff0000)
+      circleTexture.setDepth(player === this.#scene.playerOne ? 6 : 5)
 
       this.playerToIndicatorMap.set(player, circleTexture)
+
       return true
     }
 

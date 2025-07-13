@@ -10,6 +10,7 @@ https://stan-stani.github.io/minigames/
 
     - Improve race progress bar positioning
     - Add flag icon to indicate finish at end of bar
+    - fix bug at 20% no kill root
 
 #### Known Bugs
 

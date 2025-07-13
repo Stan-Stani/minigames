@@ -103,6 +103,8 @@ export class BobberScene extends Scene {
     this.load.image('player', './bobber/player.png')
     this.load.image('enemy', './enemy.png')
     this.load.image('flag', './bobber/entities/flag.png')
+    this.load.image('flagIcon', './bobber/ui/flagIcon.png')
+
     this.load.aseprite({
       key: 'buoy',
       textureURL: './bobber/entities/buoy.png',

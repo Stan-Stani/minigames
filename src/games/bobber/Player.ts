@@ -186,7 +186,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         // Can't figure out how to get network players to be behind local
         // player other than this
         this.setDepth(-4)
-        this.scene.raceProgressBar?.playerToIndicatorMap.get(this)?.setDepth(-3)
       })
     }
 
