@@ -107,6 +107,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     scene.physics.add.existing(this)
 
     this.multiplayerConfig?.myPeerPlayerConn?.on('close', () => {
+      this.scene.raceProgressBar?.removePlayerIndicator(this)
       this.destroy()
     })
 

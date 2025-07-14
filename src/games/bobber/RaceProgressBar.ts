@@ -1,4 +1,3 @@
-import { Scene } from 'phaser'
 import { Player } from './Player'
 import BobberScene from './bobber'
 
@@ -62,6 +61,10 @@ export class RaceProgressBar {
     return false
   }
 
+  removePlayerIndicator(player: Player) {
+    this.playerToIndicatorMap.get(player)?.destroy()
+  }
+
   updatePosition(player: Player) {
     this.tryInitializePlayerIndicator(player)
     const playerPosClampedToCourse = Math.min(
@@ -72,7 +75,6 @@ export class RaceProgressBar {
       Math.abs(playerPosClampedToCourse / (this.#endX - this.#startX)) *
       BAR_WIDTH
     this.playerToIndicatorMap.get(player)?.setX(BAR_START_X + offset)
-    console.log(player.myTint)
     player.myTint &&
       this.playerToIndicatorMap.get(player)?.setTint(player.myTint)
   }
